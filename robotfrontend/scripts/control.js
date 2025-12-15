@@ -127,15 +127,33 @@ function initializeControl(snapshot, config, robotid) {
 
   console.log('Robot initialized: ' + robot.currentRobot);
 
-  // Load any responsivevoice voices if used/to be used
-  if (responsiveVoice != null) {
-    var voices = responsiveVoice.getVoices();
-    $('#voiceselection').empty();
-    $.each(voices, function () {
-      $('#voiceselection').append(
-        $('<option />').val(this.name).text(this.name + ' (' + this.lang + ')')
-      );
-    });
+}
+
+// Speak both through the robot (if available) and locally via Web Speech API.
+function speakTextOutLoud(text) {
+  if (!text) {
+    return;
+  }
+
+  if (robot && typeof robot.speak === 'function') {
+    robot.speak(text);
+  }
+
+  if ('speechSynthesis' in window) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    var voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      // Prefer an English voice when available; otherwise use the first.
+      var preferred =
+        voices.find(function (v) {
+          return v.lang && v.lang.toLowerCase().indexOf('en') === 0;
+        }) || voices[0];
+      utterance.voice = preferred;
+    }
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  } else {
+    console.warn('Web Speech API not supported in this browser; skipping local speech.');
   }
 }
 
@@ -465,7 +483,7 @@ function headTouched() {
 
 function sayPreset(target) {
   var text = target.innerHTML;
-  robot.speak(text);
+  speakTextOutLoud(text);
 }
 
 function speakPressed() {
@@ -474,7 +492,7 @@ function speakPressed() {
   console.log('Speaking');
   console.log('will say:' + text);
   // requestRobotAction("speak", {text:text});
-  robot.speak(text);
+  speakTextOutLoud(text);
 }
 
 function bubblePressed() {
