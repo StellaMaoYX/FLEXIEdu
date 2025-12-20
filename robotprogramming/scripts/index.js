@@ -1,6 +1,14 @@
-var config = new Config();
+var config = {
+    apiKey: "AIzaSyB10dHhQqD1TMXTJfQNLmFkrJtVyQ4JTuA",
+    authDomain: "flexi-f7d77.firebaseapp.com",
+    databaseURL: "https://flexi-f7d77-default-rtdb.firebaseio.com",
+    projectId: "flexi-f7d77",
+    storageBucket: "flexi-f7d77.appspot.com",
+    messagingSenderId: "441373455093"
+};
+
 var robot = new Robot(0);
-var db = new Database(config.config, initialize);
+var db = new Database(config, initialize);
 
 var robotPrograms;
 var myPrograms;
