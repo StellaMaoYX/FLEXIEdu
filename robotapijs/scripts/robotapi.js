@@ -235,9 +235,14 @@ function Robot(robotId, apiDiv) {
   Robot.logData = async function(sliderValue, activity, location, scale) {
       var currTime = Date.now();
       var currDate = new Date().toDateString();
+      var user = firebase.auth().currentUser;
+      if (!user) {
+        console.log("Cannot log data: User not signed in.");
+        return;
+      }
       var dir =
         'study_users/' +
-        firebase.auth().currentUser.displayName +
+        (user.displayName || user.uid) +
         '/data/' +
         activity +
         '/' +

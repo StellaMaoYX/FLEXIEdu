@@ -25,13 +25,8 @@ function Database(config, readyCallback) {
   * Function to initialize firebase and sign in anonymously
   */
   Database.initialize = async function() {
-      Database.app = await firebase.initializeApp(Database.config);
-      firebase.auth().onAuthStateChanged(Database.handleAuthStateChange);
-      // Wait a little bit to see is we are already logged in
-      // then attempt an anonymous sign in
-      window.setTimeout(function(){
-        Database.signInAnonymously();
-      }, 1000);    
+    Database.app = await firebase.initializeApp(Database.config);
+    firebase.auth().onAuthStateChanged(Database.handleAuthStateChange);
   }
   
   /*
@@ -42,7 +37,7 @@ function Database(config, readyCallback) {
   Database.nLibrariesLoaded = 0;
   Database.libraryLoadCallback = function(){
     Database.nLibrariesLoaded++;
-    if (Database.nLibrariesLoaded == 4) {
+    if (Database.nLibrariesLoaded == 4) { // All Firebase scripts loaded
       Database.initialize();
     }
   }
@@ -132,7 +127,9 @@ function Database(config, readyCallback) {
         Database.readyCallback(Database.uid);
 
     } else {
-      console.log("User is signed out.");
+      // User is signed out. Attempt to sign in.
+      console.log('User is signed out. Attempting to sign in anonymously...');
+      Database.signInAnonymously();
     }
   }
 
