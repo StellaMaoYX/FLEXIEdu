@@ -105,8 +105,8 @@ function Sound() {
     //   onend: voiceEndCallback
     // }
 
-    responsiveVoice.speak(text,"UK English Female"); //, parameters);
-
+    //responsiveVoice.speak(text,"UK English Female"); //, parameters);
+    responsiveVoice.speak(text,"Fallback UK Female");
     // if ("speechSynthesis" in window) {
     if (false) {
       var msg = new SpeechSynthesisUtterance();
