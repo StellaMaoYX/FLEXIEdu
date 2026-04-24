@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FLEXI Activity</title>
+  <style>
+    /* ── Base ── */
+    * { box-sizing: border-box; }
+    body {
+      background: #eef2ff;
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding-bottom: 30px;
+    }
+
+    /* ── Waiting screen (shown before teacher pushes an activity) ── */
+    #waitingScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #888;
+      text-align: center;
+      padding: 40px;
+    }
+    #waitingScreen .wait-icon { font-size: 4rem; margin-bottom: 16px; }
+    #waitingScreen .wait-msg  { font-size: 1.4rem; }
+
+    /* ── Activity header ── */
+    #activityScreen { display: none; }
+
+    .activity-header {
+      text-align: center;
+      padding: 28px 20px 14px;
+    }
+    .activity-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1a56a0;
+      margin-bottom: 8px;
+    }
+    .activity-instruction {
+      font-size: 1.4rem;
+      color: #333;
+      margin-bottom: 14px;
+    }
+
+    /* ── Language level indicator (set by teacher) ── */
+    .level-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 14px;
+      background: #1a56a0;
+      color: white;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    /* ── Visual scaffold (blank lines matching word/sentence lengths) ── */
+    .scaffold-section {
+      max-width: 820px;
+      margin: 0 auto 8px;
+      padding: 0 16px;
+    }
+    .scaffold-wrap {
+      background: white;
+      border: 2px dashed #9dbcf5;
+      border-radius: 14px;
+      padding: 14px 20px;
+    }
+    .scaffold-label {
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .scaffold-slots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .scaffold-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .scaffold-num  { font-size: 0.75rem; color: #bbb; font-weight: bold; }
+    .scaffold-line { height: 5px; background: #9dbcf5; border-radius: 3px; min-width: 24px; }
+
+    /* ── Items list ── */
+    .items-section {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    .word-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      border: 3px solid #dde3f5;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 8px 0;
+      cursor: grab;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      font-size: 1.25rem;
+      min-height: 64px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .word-item:active { cursor: grabbing; }
+    .word-item.dragging   { opacity: 0.4; border-color: #1a56a0; }
+    .word-item.drag-over  { border-color: #1a56a0; background: #e8f0fb; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(26,86,160,.2); }
+    .word-item.selected   { border-color: #f39c12; background: #fffbf0; box-shadow: 0 0 0 3px rgba(243,156,18,.25); }
+    .word-item.state-correct   { border-color: #1a7a4a; background: #eafaf1; }
+    .word-item.state-incorrect {
+      border-color: #c0392b; background: #fdf2f2;
+      animation: shake 0.35s ease;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .drag-handle { color: #ccc; font-size: 1.5rem; cursor: grab; flex-shrink: 0; line-height: 1; }
+    .item-num    { font-size: 1rem; font-weight: bold; color: #aaa; min-width: 22px; flex-shrink: 0; }
+    .item-img    { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .item-text-btn {
+      flex: 1;
+      text-align: left;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: #222;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      line-height: 1.35;
+    }
+    .item-text-btn:hover { background: #f0f4ff; }
+    .speak-btn {
+      background: #1a56a0;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .speak-btn:hover  { background: #154583; }
+    .speak-btn:active { transform: scale(0.92); }
+    .arrow-btns       { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+    .arrow-btn {
+      background: #e8ecf5;
+      border: none;
+      border-radius: 5px;
+      width: 36px; height: 30px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #444;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s;
+    }
+    .arrow-btn:hover:not(:disabled) { background: #1a56a0; color: white; }
+    .arrow-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Action bar ── */
+    .action-bar {
+      text-align: center;
+      padding: 22px 16px 10px;
+    }
+    .check-btn {
+      background: #1a56a0;
+      color: white;
+      border: none;
+      border-radius: 34px;
+      padding: 16px 56px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(26,86,160,.35);
+      transition: all 0.15s;
+    }
+    .check-btn:hover  { background: #154583; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(26,86,160,.4); }
+    .check-btn:active { transform: translateY(0); }
+
+    /* ── Feedback overlay ── */
+    .feedback-overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 900;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .feedback-overlay.show  { opacity: 1; pointer-events: all; }
+    .overlay-correct { background: rgba(20,110,60,.88); }
+    .overlay-stuck   { background: rgba(70,70,80,.88); }
+
+    .feedback-card {
+      background: white;
+      border-radius: 24px;
+      padding: 36px 48px;
+      text-align: center;
+      max-width: 480px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.3);
+    }
+    .fb-emoji { font-size: 4.5rem; margin-bottom: 12px; }
+    .fb-title { font-size: 1.9rem; font-weight: bold; color: #222; margin-bottom: 8px; }
+    .fb-sub   { font-size: 1.1rem; color: #555; margin-bottom: 24px; }
+    .fb-btn {
+      border: none; border-radius: 24px;
+      padding: 13px 38px;
+      font-size: 1.1rem; font-weight: bold;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .fb-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-continue { background: #1a56a0; color: white; }
+    .btn-tryagain { background: #f39c12; color: white; }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .activity-title { font-size: 1.5rem; }
+      .activity-instruction { font-size: 1.2rem; }
+      .word-item { font-size: 1.1rem; }
+      .check-btn { font-size: 1.2rem; padding: 14px 36px; }
+      .feedback-card { padding: 28px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Shown before teacher pushes an activity -->
+  <div id="waitingScreen">
+    <div class="wait-icon">&#9203;</div>
+    <div class="wait-msg">Waiting for your teacher to start the activity…</div>
+  </div>
+
+  <!-- Shown once teacher pushes an activity -->
+  <div id="activityScreen">
+
+    <!-- Header -->
+    <div class="activity-header">
+      <div class="activity-title" id="activityTitle"></div>
+      <div class="activity-instruction" id="activityInstruction"></div>
+      <span class="level-badge" id="levelBadge">Sentence</span>
+    </div>
+
+    <!-- Visual scaffold -->
+    <div class="scaffold-section">
+      <div class="scaffold-wrap">
+        <div class="scaffold-label">Correct order &#8595;</div>
+        <div class="scaffold-slots" id="scaffoldSlots"></div>
+      </div>
+    </div>
+
+    <!-- Draggable items -->
+    <div class="items-section" id="itemsSection"></div>
+
+    <!-- Check button -->
+    <div class="action-bar">
+      <button class="check-btn" onclick="checkAnswer()">&#10003; Check Answer</button>
+    </div>
+
+  </div><!-- /activityScreen -->
+
+  <!-- Feedback overlay -->
+  <div class="feedback-overlay" id="feedbackOverlay">
+    <div class="feedback-card">
+      <div class="fb-emoji" id="fbEmoji"></div>
+      <div class="fb-title" id="fbTitle"></div>
+      <div class="fb-sub"   id="fbSub"></div>
+      <button class="fb-btn" id="fbBtn" onclick="onFeedbackBtn()"></button>
+    </div>
+  </div>
+
+  <script src="scripts/config.js"></script>
+  <script src="../databasejs/scripts/database.js"></script>
+  <script src="scripts/flexi-student.js"></script>
+</body>
+</html>
