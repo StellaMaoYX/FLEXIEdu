@@ -95,6 +95,6 @@ function startController() {
 }
 
 function startFlexi() {
-  window.location.href = "flexi.html?robot=" + currentRobot;
+  window.location.href = "sentence-ordering.html?robot=" + currentRobot;
 }
 

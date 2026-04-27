@@ -70,29 +70,172 @@ let lastResultTs    = 0;    // prevent duplicate result triggers
 
 const STUCK_PHRASE = "Uh-oh, I'm stuck. Let's try that again!";
 
+// ── Activity Queue ─────────────────────────────────────────────────────────
+let activityQueue = [];
+let activeIndex   = 0;
+
+function storageKey() { return `emar_queue_robot${currentRobotId}`; }
+
+function loadQueueFromStorage() {
+  try {
+    const raw = localStorage.getItem(storageKey());
+    if (raw) {
+      const data    = JSON.parse(raw);
+      activityQueue = data.queue       || [];
+      activeIndex   = data.activeIndex || 0;
+    }
+  } catch (e) { /* corrupted – start fresh */ }
+
+  if (activityQueue.length === 0) {
+    activityQueue = PRESETS.map(p => Object.assign({}, p));
+    activeIndex   = 0;
+  }
+  if (activeIndex >= activityQueue.length) activeIndex = 0;
+
+  renderQueue();
+  loadActivityIntoEditor(activeIndex);
+}
+
+function saveQueueToStorage() {
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify({ queue: activityQueue, activeIndex }));
+  } catch (e) { /* storage full */ }
+}
+
+function renderQueue() {
+  const container = document.getElementById('queueList');
+  if (!container) return;
+  container.innerHTML = '';
+  activityQueue.forEach((act, i) => {
+    const div = document.createElement('div');
+    div.className = 'queue-item' + (i === activeIndex ? ' active' : '');
+    div.innerHTML = `
+      <span class="queue-num">${i + 1}</span>
+      <span class="queue-title">${esc(act.title || 'Untitled')}</span>
+      <button class="queue-rm" title="Remove" onclick="event.stopPropagation();removeActivity(${i})">&#10005;</button>`;
+    div.addEventListener('click', () => selectActivity(i));
+    container.appendChild(div);
+  });
+}
+
+function selectActivity(i) {
+  saveCurrentToQueue();
+  activeIndex = i;
+  renderQueue();
+  loadActivityIntoEditor(i);
+}
+
+function loadActivityIntoEditor(i) {
+  const act = activityQueue[i];
+  if (!act) return;
+  document.getElementById('edTitle').value       = act.title         || '';
+  document.getElementById('edInstruction').value = act.instruction   || '';
+  document.getElementById('edSuccess').value     = act.successPhrase || '';
+  renderEditorItems(act.items || []);
+}
+
+function saveCurrentToQueue() {
+  if (!activityQueue.length) return;
+  const rows  = document.querySelectorAll('#editorItems .editor-item');
+  const items = Array.from(rows).map(row => ({
+    text:  row.querySelector('.item-text-input').value.trim(),
+    image: row.querySelector('.item-img-input').value.trim() || null,
+  })).filter(item => item.text);
+  activityQueue[activeIndex] = {
+    title:         document.getElementById('edTitle').value.trim()       || 'Untitled',
+    instruction:   document.getElementById('edInstruction').value.trim() || '',
+    successPhrase: document.getElementById('edSuccess').value.trim()     || '',
+    items,
+  };
+  renderQueue();
+}
+
+function addActivity() {
+  saveCurrentToQueue();
+  activityQueue.push({ title: 'New Activity', instruction: 'Put these steps in the correct order!', successPhrase: 'Great job!', items: [] });
+  activeIndex = activityQueue.length - 1;
+  renderQueue();
+  loadActivityIntoEditor(activeIndex);
+  saveQueueToStorage();
+}
+
+function removeActivity(i) {
+  if (activityQueue.length <= 1) return;
+  activityQueue.splice(i, 1);
+  if (activeIndex >= activityQueue.length) activeIndex = activityQueue.length - 1;
+  renderQueue();
+  loadActivityIntoEditor(activeIndex);
+  saveQueueToStorage();
+}
+
+function saveQueue() {
+  saveCurrentToQueue();
+  saveQueueToStorage();
+  showSaveStatus('✓ Saved!');
+}
+
+function showSaveStatus(msg) {
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.className   = 'save-status ok';
+  setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, 3000);
+}
+
+function skipToNext() {
+  if (activityQueue.length < 2) { showPushStatus('Only one activity in the queue.', 'error'); return; }
+  saveCurrentToQueue();
+  activeIndex = (activeIndex + 1) % activityQueue.length;
+  renderQueue();
+  loadActivityIntoEditor(activeIndex);
+  saveQueueToStorage();
+  pushToStudent();
+}
+
 // ── Initialization ─────────────────────────────────────────────────────────
 function initFlexi() {
   currentRobotId = Number(new URLSearchParams(window.location.search).get('robot') || 0);
 
-  // Optional robot connection
+  // Connect to Firebase and check if the robot backend is actually online.
+  // We listen to /robots/{id}/state/ — the backend writes this when it's running.
+  // If that path has no data within 5 seconds we mark the robot as offline.
   try {
     robot = new Robot(currentRobotId);
     Robot.initialize();
-    robotConnected = true;
-    setRobotStatus(true);
+
+    let statusResolved = false;
+
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/state`)
+      .once('value', snapshot => {
+        statusResolved = true;
+        const hasState = snapshot.val() !== null;
+        robotConnected = hasState;
+        setRobotStatus(hasState);
+      })
+      .catch(() => {
+        statusResolved = true;
+        setRobotStatus(false);
+      });
+
+    // Fallback: if Firebase doesn't respond in 5s, show offline
+    setTimeout(() => {
+      if (!statusResolved) setRobotStatus(false);
+    }, 5000);
+
+    // Keep status in sync — goes offline/online as robot backend starts/stops
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/state`)
+      .on('value', snapshot => {
+        const online = snapshot.val() !== null;
+        robotConnected = online;
+        setRobotStatus(online);
+      });
+
   } catch (e) {
-    console.warn('Robot not connected (standalone):', e);
+    console.warn('Firebase unavailable — standalone mode:', e);
     setRobotStatus(false);
   }
-
-  // Populate preset selector
-  const sel = document.getElementById('presetSelect');
-  PRESETS.forEach((p, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = p.title;
-    sel.appendChild(opt);
-  });
 
   // Set student screen link
   const studentUrl = `${window.location.origin}/robotbackend/flexi-student.html?robot=${currentRobotId}`;
@@ -100,8 +243,8 @@ function initFlexi() {
   linkEl.href        = studentUrl;
   linkEl.textContent = studentUrl;
 
-  // Load first preset into editor
-  loadPreset();
+  // Load activity queue from localStorage (falls back to presets if empty)
+  loadQueueFromStorage();
 
   // Listen for student results
   listenForResults();
@@ -112,16 +255,6 @@ function setRobotStatus(connected) {
   document.getElementById('statusDot').className  = `status-dot ${connected ? 'dot-on' : 'dot-off'}`;
   document.getElementById('statusText').textContent = connected ? 'Robot connected' : 'Robot not connected (standalone)';
   document.getElementById('robotBadge').textContent = connected ? '🤖 Connected' : '⚠ No robot';
-}
-
-// ── Preset Loader ──────────────────────────────────────────────────────────
-function loadPreset() {
-  const idx    = Number(document.getElementById('presetSelect').value);
-  const preset = PRESETS[idx];
-  document.getElementById('edTitle').value       = preset.title;
-  document.getElementById('edInstruction').value = preset.instruction;
-  document.getElementById('edSuccess').value     = preset.successPhrase;
-  renderEditorItems(preset.items);
 }
 
 // ── Editor Item Rendering ──────────────────────────────────────────────────
