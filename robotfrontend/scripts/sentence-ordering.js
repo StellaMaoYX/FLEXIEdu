@@ -332,7 +332,7 @@ function pushToStudent() {
       firebase.database()
         .ref(`/robots/${currentRobotId}/flexi/pushed`)
         .set(activity)
-        .then(() => { showPushStatus('✓ Pushed to student screen!', 'ok'); startWaitingMotion(); })
+        .then(() => { showPushStatus('✓ Pushed to student screen!', 'ok'); startWaitingMotion(); showAnsweringState(); })
         .catch(e => showPushStatus('Firebase error: ' + e.message, 'error'));
     } catch (e) {
       showPushStatus('Firebase unavailable — no robot connected.', 'error');
@@ -405,6 +405,7 @@ function sendCommand(type) {
     firebase.database()
       .ref(`/robots/${currentRobotId}/flexi/command`)
       .set({ type, timestamp: Date.now() });
+    if (type === 'reset' || type === 'tryAgain') showAnsweringState();
   } catch (e) { console.warn('Command send failed:', e); }
 }
 
@@ -435,6 +436,12 @@ function listenForResults() {
         lastResultTs = data.timestamp;
         handleStudentResult(data.isCorrect);
       });
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/flexi/studentStatus`)
+      .on('value', snapshot => {
+        const data = snapshot.val();
+        if (data && data.status === 'answering') showAnsweringState();
+      });
   } catch (e) { console.warn('Result listener failed:', e); }
 }
 
@@ -456,6 +463,15 @@ function robotSpeak(text) {
   if (robotConnected) {
     try { Robot._requestRobotAction('speak', { text }); } catch (e) { /* standalone */ }
   }
+}
+
+function showAnsweringState() {
+  const box = document.getElementById('resultBox');
+  box.className = 'result-box answering';
+  box.innerHTML = `
+    <div class="result-emoji">✏️</div>
+    <div class="result-label">Student is answering…</div>
+    <div class="result-time"></div>`;
 }
 
 function updateResultBox(isCorrect, successPhrase) {

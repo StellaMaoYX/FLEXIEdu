@@ -235,15 +235,18 @@
       border: 2px solid #e0e4f0;
       margin-bottom: 4px;
     }
-    .result-box.waiting   { background: #f8f9fe; }
-    .result-box.correct   { background: #146e3c; border-color: #146e3c; color: white; }
-    .result-box.incorrect { background: #46465a; border-color: #46465a; color: white; }
+    .result-box.waiting    { background: #f8f9fe; }
+    .result-box.answering  { background: #eef4ff; border-color: #9dbcf5; }
+    .result-box.correct    { background: #146e3c; border-color: #146e3c; color: white; }
+    .result-box.incorrect  { background: #46465a; border-color: #46465a; color: white; }
     .result-box.correct .result-time,
     .result-box.incorrect .result-time { color: rgba(255,255,255,0.55); }
     .result-emoji { font-size: 2rem; margin-bottom: 4px; }
     .result-label { font-weight: bold; font-size: 0.95rem; }
     .result-sub   { font-size: 0.88rem; margin-top: 3px; opacity: 0.88; }
     .result-time  { font-size: 0.75rem; color: #999; margin-top: 4px; }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    .result-box.answering .result-emoji { animation: blink 1.4s ease-in-out infinite; }
 
     /* ── Control buttons ── */
     .ctrl-btn {
@@ -489,8 +492,7 @@
         <div class="card-head">&#128100; Teacher Controls</div>
         <div class="card-body">
           <p class="section-title">Activity</p>
-          <button class="ctrl-btn" onclick="sendCommand('reset')">&#128260; Reset Student Screen</button>
-          <button class="ctrl-btn" onclick="sendCommand('tryAgain')">&#128170; Try Again</button>
+          <button class="ctrl-btn" onclick="sendCommand('reset')">&#9851; Reset Student Screen</button>
           <button class="ctrl-btn" onclick="skipToNext()">&#9197; Skip to Next</button>
           <button class="ctrl-btn" onclick="sendCommand('repeat')">&#128257; Repeat Instructions</button>
 

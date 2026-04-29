@@ -294,11 +294,15 @@ function hideFeedback() {
 function onFeedbackBtn() {
   hideFeedback();
   if (!feedbackIsCorrect) {
-    // Re-shuffle and try again
     currentItems = currentActivity.items.map((item, i) => ({ ...item, origIdx: i }));
     shuffle(currentItems);
     selectedIndex = null;
     renderItems();
+    try {
+      firebase.database()
+        .ref(`/robots/${currentRobotId}/flexi/studentStatus`)
+        .set({ status: 'answering', timestamp: Date.now() });
+    } catch (e) {}
   }
 }
 
