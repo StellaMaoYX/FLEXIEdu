@@ -125,7 +125,7 @@ function loadQueueFromStorage() {
   } catch (e) { /* corrupted – start fresh */ }
 
   if (activityQueue.length === 0) {
-    activityQueue = PRESETS.map(p => Object.assign({}, p));
+    activityQueue = PRESETS.map(p => JSON.parse(JSON.stringify(p)));
     activeIndex   = 0;
   }
   if (activeIndex >= activityQueue.length) activeIndex = 0;
@@ -221,6 +221,7 @@ function saveCurrentToQueue() {
     items,
   };
   renderQueue();
+  saveQueueToStorage();
 }
 
 function addActivity() {
