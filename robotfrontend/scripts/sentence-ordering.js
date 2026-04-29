@@ -114,7 +114,7 @@ function migrateActivity(act) {
   };
 }
 
-function loadQueueFromStorage() {
+function _loadFromLocalStorage() {
   try {
     const raw = localStorage.getItem(storageKey());
     if (raw) {
@@ -122,22 +122,50 @@ function loadQueueFromStorage() {
       activityQueue = (data.queue || []).map(migrateActivity);
       activeIndex   = data.activeIndex || 0;
     }
-  } catch (e) { /* corrupted – start fresh */ }
-
+  } catch (e) { /* corrupted */ }
   if (activityQueue.length === 0) {
     activityQueue = PRESETS.map(p => JSON.parse(JSON.stringify(p)));
     activeIndex   = 0;
   }
-  if (activeIndex >= activityQueue.length) activeIndex = 0;
+}
 
-  renderQueue();
-  loadActivityIntoEditor(activeIndex);
+function loadQueueFromStorage() {
+  try {
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
+      .once('value', snapshot => {
+        const data = snapshot.val();
+        if (data && data.queue && data.queue.length > 0) {
+          activityQueue = data.queue.map(migrateActivity);
+          activeIndex   = data.activeIndex || 0;
+        } else {
+          _loadFromLocalStorage();
+        }
+        if (activeIndex >= activityQueue.length) activeIndex = 0;
+        renderQueue();
+        loadActivityIntoEditor(activeIndex);
+      });
+  } catch (e) {
+    // Firebase unavailable — fall back to localStorage
+    _loadFromLocalStorage();
+    if (activeIndex >= activityQueue.length) activeIndex = 0;
+    renderQueue();
+    loadActivityIntoEditor(activeIndex);
+  }
 }
 
 function saveQueueToStorage() {
+  const data = { queue: activityQueue, activeIndex };
+  // Save to localStorage (instant local backup)
   try {
-    localStorage.setItem(storageKey(), JSON.stringify({ queue: activityQueue, activeIndex }));
-  } catch (e) { /* storage full */ }
+    localStorage.setItem(storageKey(), JSON.stringify(data));
+  } catch (e) {}
+  // Save to Firebase (persistent, cross-device)
+  try {
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
+      .set(data);
+  } catch (e) {}
 }
 
 function renderQueue() {
