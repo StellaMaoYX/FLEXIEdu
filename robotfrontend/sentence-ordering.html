@@ -369,6 +369,9 @@
       font-size: 0.9rem;
     }
     .queue-rm:hover { background: #fde; }
+    .queue-drag { color: #ccc; cursor: grab; font-size: 1rem; padding: 0 2px; flex-shrink: 0; }
+    .queue-item.dragging  { opacity: 0.4; }
+    .queue-item.drag-over { border-color: #1a56a0; background: #dbeaff; transform: translateY(-2px); }
     .add-queue-btn {
       width: 100%;
       padding: 7px;
@@ -433,6 +436,12 @@
 
           <label class="field-label">Activity Title</label>
           <input class="field-input" type="text" id="edTitle" placeholder="e.g. Life Cycle of a Butterfly">
+
+          <div class="level-btns" style="margin-bottom:12px;" id="editorLevelTabs">
+            <button class="level-btn" data-level="word"     onclick="switchEditorLevel('word')">Word</button>
+            <button class="level-btn" data-level="phrase"   onclick="switchEditorLevel('phrase')">Phrase</button>
+            <button class="level-btn active" data-level="sentence" onclick="switchEditorLevel('sentence')">Sentence</button>
+          </div>
 
           <label class="field-label">Instruction (students see this)</label>
           <input class="field-input" type="text" id="edInstruction" placeholder="e.g. Put these steps in the correct order!">
@@ -505,7 +514,7 @@
         </div>
       </div>
 
-      <!-- Teacher materials -->
+      <!-- Teacher materials (disabled)
       <div class="card">
         <div class="card-head">&#128193; Teacher Materials</div>
         <div class="card-body">
@@ -520,6 +529,7 @@
           <ul class="resource-list" id="resourceList"></ul>
         </div>
       </div>
+      -->
 
     </div><!-- /right-col -->
   </div><!-- /main-grid -->

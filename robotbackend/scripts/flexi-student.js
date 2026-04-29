@@ -255,7 +255,7 @@ function showCorrect() {
     'overlay-correct', '🎉',
     'Amazing! You got it right!',
     currentActivity.successPhrase || '',
-    'Continue →', 'btn-continue'
+    null, null
   );
   speakText(currentActivity.successPhrase || 'Wonderful! You did it!');
 }
@@ -282,9 +282,17 @@ function showFeedback(overlayClass, emoji, title, sub, btnLabel, btnClass) {
   document.getElementById('fbEmoji').textContent = emoji;
   document.getElementById('fbTitle').textContent = title;
   document.getElementById('fbSub').textContent   = sub;
-  const btn = document.getElementById('fbBtn');
-  btn.textContent = btnLabel;
-  btn.className   = `fb-btn ${btnClass}`;
+  const btn  = document.getElementById('fbBtn');
+  const wait = document.getElementById('fbWait');
+  if (btnLabel) {
+    btn.textContent   = btnLabel;
+    btn.className     = `fb-btn ${btnClass}`;
+    btn.style.display = '';
+    if (wait) wait.style.display = 'none';
+  } else {
+    btn.style.display = 'none';
+    if (wait) wait.style.display = 'block';
+  }
 }
 
 function hideFeedback() {

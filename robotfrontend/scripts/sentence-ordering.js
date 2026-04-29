@@ -14,49 +14,73 @@
 const PRESETS = [
   {
     title: 'Life Cycle of a Butterfly',
-    instruction: 'Put these steps in the correct order!',
     successPhrase: 'You got the butterfly life cycle right!',
-    items: [
-      { text: 'A butterfly lays eggs on a leaf.',        image: null },
-      { text: 'The eggs hatch into tiny caterpillars.',  image: null },
-      { text: 'The caterpillar forms a chrysalis.',      image: null },
-      { text: 'A butterfly emerges from the chrysalis!', image: null },
-    ],
+    levels: {
+      word:     { instruction: 'Put these words in order!',    items: [] },
+      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
+      sentence: {
+        instruction: 'Put these steps in the correct order!',
+        items: [
+          { text: 'A butterfly lays eggs on a leaf.',        image: null },
+          { text: 'The eggs hatch into tiny caterpillars.',  image: null },
+          { text: 'The caterpillar forms a chrysalis.',      image: null },
+          { text: 'A butterfly emerges from the chrysalis!', image: null },
+        ],
+      },
+    },
   },
   {
     title: 'The Hungry Cat',
-    instruction: 'Unscramble the sentence! Drag the words into the right order.',
     successPhrase: 'The cat sat on the mat!',
-    items: [
-      { text: 'The', image: null },
-      { text: 'cat', image: null },
-      { text: 'sat', image: null },
-      { text: 'on',  image: null },
-      { text: 'the', image: null },
-      { text: 'mat', image: null },
-    ],
+    levels: {
+      word: {
+        instruction: 'Unscramble the sentence! Drag the words into the right order.',
+        items: [
+          { text: 'The', image: null },
+          { text: 'cat', image: null },
+          { text: 'sat', image: null },
+          { text: 'on',  image: null },
+          { text: 'the', image: null },
+          { text: 'mat', image: null },
+        ],
+      },
+      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
+      sentence: { instruction: 'Put these steps in the correct order!', items: [] },
+    },
   },
   {
     title: 'Desert Habitat',
-    instruction: 'Order these habitat facts from smallest to biggest idea.',
     successPhrase: 'Fantastic! You know so much about desert habitats!',
-    items: [
-      { text: 'A cactus grows in the hot, dry desert.',             image: null },
-      { text: 'Lizards and snakes live near the cactus.',           image: null },
-      { text: 'Deserts get very little rain each year.',            image: null },
-      { text: 'Deserts can be found on every continent on Earth.',  image: null },
-    ],
+    levels: {
+      word:     { instruction: 'Put these words in order!',   items: [] },
+      phrase:   { instruction: 'Put these phrases in order!', items: [] },
+      sentence: {
+        instruction: 'Order these habitat facts from smallest to biggest idea.',
+        items: [
+          { text: 'A cactus grows in the hot, dry desert.',             image: null },
+          { text: 'Lizards and snakes live near the cactus.',           image: null },
+          { text: 'Deserts get very little rain each year.',            image: null },
+          { text: 'Deserts can be found on every continent on Earth.',  image: null },
+        ],
+      },
+    },
   },
   {
     title: 'Ecosystem Food Chain',
-    instruction: 'Put these living things in order from producer to top predator.',
     successPhrase: 'Amazing! You just built a food chain!',
-    items: [
-      { text: 'Grass gets energy from the sun.',           image: null },
-      { text: 'A grasshopper eats the grass.',             image: null },
-      { text: 'A frog catches and eats the grasshopper.',  image: null },
-      { text: 'A hawk swoops down and eats the frog.',     image: null },
-    ],
+    levels: {
+      word:     { instruction: 'Put these words in order!',   items: [] },
+      phrase:   { instruction: 'Put these phrases in order!', items: [] },
+      sentence: {
+        instruction: 'Put these living things in order from producer to top predator.',
+        items: [
+          { text: 'Grass gets energy from the sun.',           image: null },
+          { text: 'A grasshopper eats the grass.',             image: null },
+          { text: 'A frog catches and eats the grasshopper.',  image: null },
+          { text: 'A hawk swoops down and eats the frog.',     image: null },
+        ],
+      },
+    },
   },
 ];
 
@@ -64,24 +88,38 @@ const PRESETS = [
 let currentRobotId  = null;
 let robot           = null;
 let robotConnected  = false;
-let resources       = [];
+// let resources    = [];  // Teacher Materials (disabled)
 let languageLevel   = 'sentence';
 let lastResultTs    = 0;    // prevent duplicate result triggers
 
 const STUCK_PHRASE = "Uh-oh, I'm stuck. Let's try that again!";
 
 // ── Activity Queue ─────────────────────────────────────────────────────────
-let activityQueue = [];
-let activeIndex   = 0;
+let activityQueue  = [];
+let activeIndex    = 0;
+let dragSrcIndex   = null;
 
 function storageKey() { return `emar_queue_robot${currentRobotId}`; }
+
+function migrateActivity(act) {
+  if (act.levels) return act;
+  return {
+    title:         act.title         || 'Untitled',
+    successPhrase: act.successPhrase || '',
+    levels: {
+      word:     { instruction: '',                    items: [] },
+      phrase:   { instruction: '',                    items: [] },
+      sentence: { instruction: act.instruction || '', items: act.items || [] },
+    },
+  };
+}
 
 function loadQueueFromStorage() {
   try {
     const raw = localStorage.getItem(storageKey());
     if (raw) {
       const data    = JSON.parse(raw);
-      activityQueue = data.queue       || [];
+      activityQueue = (data.queue || []).map(migrateActivity);
       activeIndex   = data.activeIndex || 0;
     }
   } catch (e) { /* corrupted – start fresh */ }
@@ -109,11 +147,42 @@ function renderQueue() {
   activityQueue.forEach((act, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === activeIndex ? ' active' : '');
+    div.draggable = true;
     div.innerHTML = `
+      <span class="queue-drag">&#8942;</span>
       <span class="queue-num">${i + 1}</span>
       <span class="queue-title">${esc(act.title || 'Untitled')}</span>
       <button class="queue-rm" title="Remove" onclick="event.stopPropagation();removeActivity(${i})">&#10005;</button>`;
     div.addEventListener('click', () => selectActivity(i));
+    div.addEventListener('dragstart', e => {
+      dragSrcIndex = i;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => div.classList.add('dragging'), 0);
+    });
+    div.addEventListener('dragend', () => {
+      dragSrcIndex = null;
+      document.querySelectorAll('.queue-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+    });
+    div.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.queue-item').forEach(el => el.classList.remove('drag-over'));
+      div.classList.add('drag-over');
+    });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (dragSrcIndex === null || dragSrcIndex === i) return;
+      saveCurrentToQueue();
+      const moved = activityQueue.splice(dragSrcIndex, 1)[0];
+      activityQueue.splice(i, 0, moved);
+      if      (activeIndex === dragSrcIndex)                              activeIndex = i;
+      else if (dragSrcIndex < i && activeIndex > dragSrcIndex && activeIndex <= i) activeIndex--;
+      else if (dragSrcIndex > i && activeIndex < dragSrcIndex && activeIndex >= i) activeIndex++;
+      renderQueue();
+      saveQueueToStorage();
+    });
     container.appendChild(div);
   });
 }
@@ -128,10 +197,12 @@ function selectActivity(i) {
 function loadActivityIntoEditor(i) {
   const act = activityQueue[i];
   if (!act) return;
-  document.getElementById('edTitle').value       = act.title         || '';
-  document.getElementById('edInstruction').value = act.instruction   || '';
-  document.getElementById('edSuccess').value     = act.successPhrase || '';
-  renderEditorItems(act.items || []);
+  document.getElementById('edTitle').value   = act.title         || '';
+  document.getElementById('edSuccess').value = act.successPhrase || '';
+  const lvl = (act.levels || {})[languageLevel] || { instruction: '', items: [] };
+  document.getElementById('edInstruction').value = lvl.instruction || '';
+  renderEditorItems(lvl.items || []);
+  updateEditorLevelTabs();
 }
 
 function saveCurrentToQueue() {
@@ -141,10 +212,12 @@ function saveCurrentToQueue() {
     text:  row.querySelector('.item-text-input').value.trim(),
     image: row.querySelector('.item-img-input').value.trim() || null,
   })).filter(item => item.text);
-  activityQueue[activeIndex] = {
-    title:         document.getElementById('edTitle').value.trim()       || 'Untitled',
-    instruction:   document.getElementById('edInstruction').value.trim() || '',
-    successPhrase: document.getElementById('edSuccess').value.trim()     || '',
+  const act = activityQueue[activeIndex];
+  if (!act.levels) act.levels = { word: { instruction:'', items:[] }, phrase: { instruction:'', items:[] }, sentence: { instruction:'', items:[] } };
+  act.title         = document.getElementById('edTitle').value.trim()   || 'Untitled';
+  act.successPhrase = document.getElementById('edSuccess').value.trim() || '';
+  act.levels[languageLevel] = {
+    instruction: document.getElementById('edInstruction').value.trim() || '',
     items,
   };
   renderQueue();
@@ -152,7 +225,15 @@ function saveCurrentToQueue() {
 
 function addActivity() {
   saveCurrentToQueue();
-  activityQueue.push({ title: 'New Activity', instruction: 'Put these steps in the correct order!', successPhrase: 'Great job!', items: [] });
+  activityQueue.push({
+    title: 'New Activity',
+    successPhrase: 'Great job!',
+    levels: {
+      word:     { instruction: 'Put these words in order!',    items: [] },
+      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
+      sentence: { instruction: 'Put these steps in the correct order!', items: [] },
+    },
+  });
   activeIndex = activityQueue.length - 1;
   renderQueue();
   loadActivityIntoEditor(activeIndex);
@@ -410,19 +491,26 @@ function sendCommand(type) {
 }
 
 // ── Language Level ─────────────────────────────────────────────────────────
-function setLevel(level) {
+function switchEditorLevel(level) {
+  saveCurrentToQueue();
   languageLevel = level;
-  document.querySelectorAll('.level-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.level === level)
-  );
-  // Push updated level to student screen if connected
-  if (robotConnected) {
-    try {
-      firebase.database()
-        .ref(`/robots/${currentRobotId}/flexi/languageLevel`)
-        .set(level);
-    } catch (e) { /* standalone */ }
+  const act = activityQueue[activeIndex];
+  if (act) {
+    const lvl = (act.levels || {})[level] || { instruction: '', items: [] };
+    document.getElementById('edInstruction').value = lvl.instruction || '';
+    renderEditorItems(lvl.items || []);
   }
+  updateEditorLevelTabs();
+}
+
+function updateEditorLevelTabs() {
+  document.querySelectorAll('#editorLevelTabs .level-btn, .level-btn[data-level]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.level === languageLevel)
+  );
+}
+
+function setLevel(level) {
+  switchEditorLevel(level);
 }
 
 // ── Student Result Listener ────────────────────────────────────────────────
@@ -494,37 +582,37 @@ function updateResultBox(isCorrect, successPhrase) {
   }
 }
 
-// ── Static Content ─────────────────────────────────────────────────────────
-function handleUpload(e) {
-  Array.from(e.target.files).forEach(file => {
-    resources.push({ name: file.name, url: URL.createObjectURL(file) });
-    renderResources();
-  });
-  e.target.value = '';
-}
-
-function addLink() {
-  const input = document.getElementById('linkInput');
-  const url   = input.value.trim();
-  if (!url) return;
-  resources.push({ name: url, url });
-  input.value = '';
-  renderResources();
-}
-
-function removeResource(i) {
-  resources.splice(i, 1);
-  renderResources();
-}
-
-function renderResources() {
-  document.getElementById('resourceList').innerHTML =
-    resources.map((r, i) => `
-      <li class="resource-item">
-        <a href="${r.url}" target="_blank" rel="noopener">${r.name}</a>
-        <button class="resource-rm" onclick="removeResource(${i})">&#10005;</button>
-      </li>`).join('');
-}
+// ── Static Content (Teacher Materials — disabled) ──────────────────────────
+// function handleUpload(e) {
+//   Array.from(e.target.files).forEach(file => {
+//     resources.push({ name: file.name, url: URL.createObjectURL(file) });
+//     renderResources();
+//   });
+//   e.target.value = '';
+// }
+//
+// function addLink() {
+//   const input = document.getElementById('linkInput');
+//   const url   = input.value.trim();
+//   if (!url) return;
+//   resources.push({ name: url, url });
+//   input.value = '';
+//   renderResources();
+// }
+//
+// function removeResource(i) {
+//   resources.splice(i, 1);
+//   renderResources();
+// }
+//
+// function renderResources() {
+//   document.getElementById('resourceList').innerHTML =
+//     resources.map((r, i) => `
+//       <li class="resource-item">
+//         <a href="${r.url}" target="_blank" rel="noopener">${r.name}</a>
+//         <button class="resource-rm" onclick="removeResource(${i})">&#10005;</button>
+//       </li>`).join('');
+// }
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {

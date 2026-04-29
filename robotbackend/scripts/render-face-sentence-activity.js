@@ -231,6 +231,12 @@
       if (!cmd) return;
       if (cmd.type === 'reset' || cmd.type === 'tryAgain') applyState(STATE_WORKING);
     });
+
+    // Student clicked Try Again → return to working
+    db.ref(`/robots/${robotId}/flexi/studentStatus`).on('value', snap => {
+      const data = snap.val();
+      if (data && data.status === 'answering') applyState(STATE_WORKING);
+    });
   }
 
   // ── Demo mode (cycles through all states when Firebase is unavailable) ─────
