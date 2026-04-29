@@ -130,27 +130,35 @@ function _loadFromLocalStorage() {
 }
 
 function loadQueueFromStorage() {
-  try {
-    firebase.database()
-      .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
-      .once('value', snapshot => {
-        const data = snapshot.val();
-        if (data && data.queue && data.queue.length > 0) {
-          activityQueue = data.queue.map(migrateActivity);
-          activeIndex   = data.activeIndex || 0;
-        } else {
-          _loadFromLocalStorage();
-        }
-        if (activeIndex >= activityQueue.length) activeIndex = 0;
-        renderQueue();
-        loadActivityIntoEditor(activeIndex);
-      });
-  } catch (e) {
-    // Firebase unavailable — fall back to localStorage
-    _loadFromLocalStorage();
+  function applyAndRender() {
     if (activeIndex >= activityQueue.length) activeIndex = 0;
     renderQueue();
     loadActivityIntoEditor(activeIndex);
+  }
+
+  try {
+    firebase.database()
+      .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
+      .once('value',
+        snapshot => {
+          const data = snapshot.val();
+          if (data && data.queue && data.queue.length > 0) {
+            activityQueue = data.queue.map(migrateActivity);
+            activeIndex   = data.activeIndex || 0;
+          } else {
+            _loadFromLocalStorage();
+          }
+          applyAndRender();
+        },
+        error => {
+          console.warn('Firebase queue load failed:', error);
+          _loadFromLocalStorage();
+          applyAndRender();
+        }
+      );
+  } catch (e) {
+    _loadFromLocalStorage();
+    applyAndRender();
   }
 }
 
@@ -164,7 +172,8 @@ function saveQueueToStorage() {
   try {
     firebase.database()
       .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
-      .set(data);
+      .set(data)
+      .catch(e => console.warn('Firebase queue save failed:', e));
   } catch (e) {}
 }
 
@@ -653,3 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initFlexi();
   }
 });
+
+// Save before page refresh / close
+window.addEventListener('beforeunload', () => saveCurrentToQueue());
