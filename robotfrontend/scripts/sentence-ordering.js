@@ -473,8 +473,8 @@ function startWaitingMotion() {
   stopWaitingMotion();
   let toggle = 1;
   try {
-    // 先把头从天花板拉回中性位置（U/D 从最大值往下移约 700 单位）
-    robot.moveNeck(0, -700, 0, 0);
+    // Reset head from max-up position to neutral (~500 units below current)
+    robot.moveNeck(0, 0, -500, 0);
     setTimeout(() => {
       if (!Robot.currentMotorState) return;
       robot.moveNeck(150, 0, 0, 0);
@@ -498,13 +498,13 @@ function playCorrectMotion() {
   if (!robotConnected || !robot || !Robot.currentMotorState) return;
   stopWaitingMotion();
   try {
-    // 正值 = 朝天花板方向 = 抬头（高兴）
-    robot.moveNeck(0, 200, 0, 0);
+    // Positive pan = raise head (happy)
+    robot.moveNeck(0, 0, 200, 0);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -300); }, 600);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  600); }, 1200);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -600); }, 1800);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  300); }, 2400);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, -200, 0,  0); }, 3000);  // 回中性
+    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, -200,  0); }, 3000);  // return to neutral
   } catch (e) {}
 }
 
@@ -512,13 +512,13 @@ function playStuckMotion() {
   if (!robotConnected || !robot || !Robot.currentMotorState) return;
   stopWaitingMotion();
   try {
-    // 负值 = 远离天花板方向 = 低头（难过）
-    robot.moveNeck(0, -200, 0, 0);
+    // Negative pan = lower head (sad)
+    robot.moveNeck(0, 0, -200, 0);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -300); }, 600);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  600); }, 1200);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -600); }, 1800);
     setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  300); }, 2400);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 200, 0,   0); }, 3000);  // 回中性
+    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 200,   0); }, 3000);  // return to neutral
   } catch (e) {}
 }
 
