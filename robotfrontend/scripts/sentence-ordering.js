@@ -357,7 +357,8 @@ function initFlexi() {
   }
 
   // Set student screen link
-  const studentUrl = `${window.location.origin}/robotbackend/flexi-student.html?robot=${currentRobotId}`;
+  const base = window.location.href.replace(/\/robotfrontend\/.*$/, '');
+  const studentUrl = `${base}/robotbackend/flexi-student.html?robot=${currentRobotId}`;
   const linkEl = document.getElementById('studentLink');
   linkEl.href        = studentUrl;
   linkEl.textContent = studentUrl;
@@ -467,16 +468,27 @@ function showPushStatus(msg, type) {
 
 // ── Robot Motion ───────────────────────────────────────────────────────────
 let waitingMotionInterval = null;
+let motionTimeouts = [];
+
+function clearMotionTimeouts() {
+  motionTimeouts.forEach(id => clearTimeout(id));
+  motionTimeouts = [];
+}
+
+function mot(fn, delay) {
+  motionTimeouts.push(setTimeout(fn, delay));
+}
 
 function startWaitingMotion() {
   if (!robotConnected || !robot || !Robot.currentMotorState) return;
   stopWaitingMotion();
+  clearMotionTimeouts();
   try {
     // Reset head to neutral, then tilt left/right 3 times and stop
     robot.moveNeck(0, -1100, 0, 0);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck( 150, 0, 0, 0); }, 600);   // tilt right (1)
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(-450, 0, 0, 0); }, 1200);  // tilt left  (2)
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck( 300, 0, 0, 0); }, 1800);  // back center (3)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck( 150, 0, 0, 0); }, 600);   // tilt right (1)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(-450, 0, 0, 0); }, 1200);  // tilt left  (2)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck( 300, 0, 0, 0); }, 1800);  // back center (3)
   } catch (e) {}
 }
 
@@ -490,28 +502,30 @@ function stopWaitingMotion() {
 function playCorrectMotion() {
   if (!robotConnected || !robot || !Robot.currentMotorState) return;
   stopWaitingMotion();
+  clearMotionTimeouts();
   try {
     // Tilt up/down 3 times, return to starting position
-    robot.moveNeck(0,  200, 0, 0);                                                             // up   (1)
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, -400, 0, 0); }, 500);   // down
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0,  400, 0, 0); }, 1000);  // up   (2)
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, -400, 0, 0); }, 1500);  // down
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0,  400, 0, 0); }, 2000);  // up   (3)
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, -200, 0, 0); }, 2500);  // return to neutral
+    robot.moveNeck(0,  200, 0, 0);                                                        // up   (1)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, -400, 0, 0); }, 500);     // down
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0,  400, 0, 0); }, 1000);    // up   (2)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, -400, 0, 0); }, 1500);    // down
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0,  400, 0, 0); }, 2000);    // up   (3)
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, -200, 0, 0); }, 2500);    // return to neutral
   } catch (e) {}
 }
 
 function playStuckMotion() {
   if (!robotConnected || !robot || !Robot.currentMotorState) return;
   stopWaitingMotion();
+  clearMotionTimeouts();
   try {
     // Negative tilt = lower head (sad)
     robot.moveNeck(0, -200, 0, 0);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -300); }, 600);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  600); }, 1200);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -600); }, 1800);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  300); }, 2400);
-    setTimeout(() => { if (Robot.currentMotorState) robot.moveNeck(0, 200, 0,   0); }, 3000);  // return to neutral
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -300); }, 600);
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  600); }, 1200);
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0, -600); }, 1800);
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, 0, 0,  300); }, 2400);
+    mot(() => { if (Robot.currentMotorState) robot.moveNeck(0, 200, 0,   0); }, 3000);   // return to neutral
   } catch (e) {}
 }
 
