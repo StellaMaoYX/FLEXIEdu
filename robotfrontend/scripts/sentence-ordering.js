@@ -474,7 +474,7 @@ function startWaitingMotion() {
   let toggle = 1;
   try {
     // Reset head from max-up (U/D=2682) to neutral (~1100 units below max)
-    robot.moveNeck(0, -1100, 0, 0);
+    robot.moveNeck(0, -1500, 0, 0);
     setTimeout(() => {
       if (!Robot.currentMotorState) return;
       robot.moveNeck(150, 0, 0, 0);
