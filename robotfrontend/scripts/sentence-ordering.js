@@ -457,6 +457,7 @@ function uploadItemImage(fileInput) {
       preview.innerHTML     = `<img src="${data.secure_url}" style="max-height:56px;border-radius:6px;border:1px solid #dde;">`;
       uploadLabel.childNodes[0].textContent = origText;
       uploadLabel.style.background = '#1a56a0';
+      saveCurrentToQueue();
     })
     .catch(err => {
       console.error('Image upload failed:', err);
