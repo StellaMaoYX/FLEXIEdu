@@ -49,6 +49,53 @@
       </div>
     </div>
     <div class="row mb-2">
+  <div class="col">
+    <div class="card">
+      <div class="card-header">
+        <button class="btn btn-link btn-lg" type="button" data-toggle="collapse"
+          data-target="#collapseIdEmail">
+          Link Email to User ID
+        </button>
+      </div>
+
+      <div class="collapse collapsed" id="collapseIdEmail">
+        <div class="card-body">
+          <div id="idEmailList" class="mb-3">
+              Update or register your email to see the email list...
+          </div>
+
+          <div class="mb-2">
+            User ID:
+            <select id="userId">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+            </select>
+
+            Gmail:
+            <input class="large-text" type="email" id="linkedEmail">
+
+            <button class="btn btn-success" onclick="saveIdEmail()">
+              Save / Update
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="row mb-2">
       <div class="col">
         <div class="card">
           <div class="card-header" id="headingSpeak">

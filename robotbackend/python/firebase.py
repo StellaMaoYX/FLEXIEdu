@@ -67,7 +67,7 @@ while(True):
 	robot_state = robots[this_robot_id]["state"]
 	led_rgb = [robot_state["currentLEDR"], robot_state["currentLEDG"], robot_state["currentLEDB"]]
 	if (current_led_rgb != led_rgb):
-		print("New LED color: " str(led_rgb))
+		print("New LED color: " + str(led_rgb))
 		# TODO: Set actual LED color
 		current_led_rgb = led_rgb
 	
