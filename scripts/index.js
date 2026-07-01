@@ -41,6 +41,7 @@ function onSignedIn(user) {
     avatar.style.display = 'none';
   }
 
+  setLaunchButtonsEnabled(true);
   var email = user.email.toLowerCase();
 
   // Check admin first
@@ -56,11 +57,24 @@ function onSignedIn(user) {
   });
 }
 
+function setLaunchButtonsEnabled(enabled) {
+  ['btnRobotDisplay', 'btnTeacherDash'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (enabled) {
+      el.classList.remove('btn-disabled');
+    } else {
+      el.classList.add('btn-disabled');
+    }
+  });
+}
+
 function onSignedOut() {
   document.getElementById('loginSection').style.display = 'flex';
   document.getElementById('userSection').style.display = 'none';
   document.getElementById('adminPanel').classList.remove('visible');
   setRobotIdStatus('locked');
+  setLaunchButtonsEnabled(false);
 }
 
 function handleSignOut() {
