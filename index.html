@@ -185,122 +185,241 @@
       text-decoration: none;
     }
 
-    /* Email linking section */
-    .email-section {
-      margin-top: 40px;
+    /* Third card — Your Robot */
+    .badge-account { background: #f3f4f6; color: #374151; }
+
+    .robot-id-status {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 0 28px;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .status-icon { font-size: 3.5rem; line-height: 1; }
+
+    .status-hint {
+      font-size: 1rem;
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .robot-id-number {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      line-height: 1;
+    }
+
+    .robot-id-label {
+      font-size: 1rem;
+      color: #6b7280;
+    }
+
+    /* Login section */
+    .login-section {
+      margin-top: 32px;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.07);
       border: 1px solid #e8ecf0;
-      overflow: hidden;
-    }
-
-    .email-section-header {
-      padding: 22px 28px 18px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 24px 28px;
       display: flex;
       align-items: center;
-      gap: 14px;
-    }
-
-    .email-section-header .badge-tag {
-      margin-bottom: 0;
-    }
-
-    .email-section-header h2 {
-      font-size: 1.45rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-    }
-
-    .email-section-body {
-      padding: 24px 28px 28px;
-      display: flex;
-      gap: 40px;
-      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
       flex-wrap: wrap;
     }
 
-    .email-table-wrap {
-      flex: 1;
-      min-width: 240px;
+    .login-prompt { font-size: 1.05rem; font-weight: 500; color: #374151; }
+
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 22px;
+      background: #fff;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: box-shadow 0.15s, background 0.15s;
     }
+
+    .btn-google:hover { background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    .btn-google svg { flex-shrink: 0; }
+
+    .user-info { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+    .user-email { font-size: 1rem; color: #374151; font-weight: 500; }
+
+    .btn-signout {
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #374151;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-signout:hover { background: #e2e8f0; }
+
+    /* Admin panel */
+    .admin-panel { margin-top: 32px; display: none; }
+    .admin-panel.visible { display: block; }
+
+    .admin-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .admin-panel-title h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .admin-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      border: 1px solid #e8ecf0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .admin-card-header {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .admin-card-header h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 10px;
+    }
+
+    .admin-card-body { padding: 18px 22px 22px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
 
     .email-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 1rem;
+      font-size: 0.88rem;
     }
 
     .email-table th {
       background: #f8fafc;
       color: #374151;
       font-weight: 600;
-      padding: 10px 16px;
+      padding: 7px 10px;
       border: 1px solid #e5e7eb;
       text-align: left;
     }
 
-    .email-table td {
-      padding: 9px 16px;
-      border: 1px solid #e5e7eb;
-      color: #4b5563;
-    }
+    .email-table td { padding: 6px 10px; border: 1px solid #e5e7eb; color: #4b5563; }
+    .email-table tr:nth-child(even) td { background: #f9fafb; }
 
-    .email-table tr:nth-child(even) td {
-      background: #f9fafb;
-    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
 
-    .email-form-wrap {
-      min-width: 280px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .email-form-wrap label {
-      font-size: 0.95rem;
+    .form-group label {
+      font-size: 0.88rem;
       font-weight: 600;
       color: #374151;
-      margin-bottom: 4px;
-      display: block;
     }
 
-    .email-form-wrap select,
-    .email-form-wrap input[type="email"] {
-      width: 100%;
-      padding: 10px 14px;
+    .form-group select,
+    .form-group input[type="text"],
+    .form-group input[type="email"] {
+      padding: 8px 12px;
       border: 1px solid #d1d5db;
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: #111827;
       background: #f9fafb;
       outline: none;
       transition: border-color 0.15s;
     }
 
-    .email-form-wrap select:focus,
-    .email-form-wrap input[type="email"]:focus {
-      border-color: #6366f1;
-      background: #fff;
-    }
+    .form-group select:focus,
+    .form-group input:focus { border-color: #6366f1; background: #fff; }
 
-    .btn-save {
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 1rem;
+    .btn-admin {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 600;
-      background: #6366f1;
       color: #fff;
       border: none;
       cursor: pointer;
+      width: 100%;
       transition: background 0.15s;
     }
 
-    .btn-save:hover {
-      background: #4f46e5;
+    .btn-admin.purple { background: #6366f1; }
+    .btn-admin.purple:hover { background: #4f46e5; }
+    .btn-admin.green { background: #22c55e; }
+    .btn-admin.green:hover { background: #16a34a; }
+    .btn-admin.red { background: #ef4444; }
+    .btn-admin.red:hover { background: #dc2626; }
+
+    .robot-list { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; max-height: 220px; }
+
+    .robot-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      background: #f9fafb;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      color: #374151;
     }
+
+    .btn-sm-del {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #991b1b;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-sm-del:hover { background: #fecaca; }
+
+    .admin-list { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; max-height: 220px; }
+
+    .admin-list-item {
+      padding: 7px 10px;
+      background: #f9fafb;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
 
     .footer {
       padding: 20px 0 0;
@@ -470,6 +589,21 @@
           </div>
         </div>
       </div>
+      <!-- Your Robot ID -->
+      <div class="card-col">
+        <div class="flexi-card">
+          <div class="card-header-block">
+            <div class="badge-tag badge-account" id="accountBadge">Your Account</div>
+            <h2>Your Robot</h2>
+          </div>
+          <div class="card-body-block">
+            <div class="robot-id-status" id="robotIdStatus">
+              <div class="status-icon">🔒</div>
+              <div class="status-hint">Please sign in below</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Hidden: Robot Programming -->
@@ -477,35 +611,88 @@
       <a href="robotprogramming/index.html">Robot Programming</a>
     </div>
 
-    <!-- Email ↔ User ID Linking -->
-    <div class="email-section">
-      <div class="email-section-header">
-        <div class="badge-tag" style="background:#ede9fe;color:#6d28d9;margin-bottom:0;">Admin</div>
-        <h2>Link Gmail to User ID</h2>
+    <!-- Login section -->
+    <div class="login-section" id="loginSection">
+      <span class="login-prompt">Sign in to see your robot assignment</span>
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+
+    <div class="login-section" id="userSection" style="display:none;">
+      <div class="user-info">
+        <img class="user-avatar" id="userAvatar" src="" alt="">
+        <span class="user-email" id="userEmailDisplay"></span>
       </div>
-      <div class="email-section-body">
-        <div class="email-table-wrap">
-          <div id="idEmailList" style="color:#6b7280;font-style:italic;">Loading...</div>
-        </div>
-        <div class="email-form-wrap">
-          <div>
-            <label for="userId">User ID</label>
-            <select id="userId">
-              <option value="0">0</option><option value="1">1</option>
-              <option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option>
-              <option value="6">6</option><option value="7">7</option>
-              <option value="8">8</option><option value="9">9</option>
-              <option value="10">10</option><option value="11">11</option>
-              <option value="12">12</option><option value="13">13</option>
-            </select>
+      <button class="btn-signout" onclick="handleSignOut()">Sign out</button>
+    </div>
+
+    <!-- Admin panel (only visible when admin is signed in) -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-panel-title">
+        <div class="badge-tag" style="background:#ede9fe;color:#6d28d9;margin-bottom:0;">Admin</div>
+        <h2>Admin Tools</h2>
+      </div>
+      <div class="admin-grid">
+
+        <!-- Link Gmail to User ID -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Link Gmail to User ID</h3>
+            <div id="idEmailList" style="color:#9ca3af;font-size:0.85rem;">Loading...</div>
           </div>
-          <div>
-            <label for="linkedEmail">Gmail</label>
-            <input type="email" id="linkedEmail" placeholder="name@example.com">
+          <div class="admin-card-body">
+            <div class="form-group">
+              <label>User ID</label>
+              <select id="userId">
+                <option value="0">0</option><option value="1">1</option>
+                <option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option>
+                <option value="6">6</option><option value="7">7</option>
+                <option value="8">8</option><option value="9">9</option>
+                <option value="10">10</option><option value="11">11</option>
+                <option value="12">12</option><option value="13">13</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Gmail</label>
+              <input type="email" id="linkedEmail" placeholder="name@example.com">
+            </div>
+            <button class="btn-admin purple" onclick="saveIdEmail()">Save / Update</button>
           </div>
-          <button class="btn-save" onclick="saveIdEmail()">Save / Update</button>
         </div>
+
+        <!-- Manage Robots -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Manage Robots</h3>
+            <div class="robot-list" id="robotList"><span style="color:#9ca3af;font-size:0.85rem;">Loading...</span></div>
+          </div>
+          <div class="admin-card-body">
+            <div class="form-group">
+              <label>New Robot Name</label>
+              <input type="text" id="robotName" placeholder="e.g. Ruby">
+            </div>
+            <button class="btn-admin green" onclick="addNewRobot()">Add Robot</button>
+          </div>
+        </div>
+
+        <!-- Manage Admins -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3>Manage Admins</h3>
+            <div class="admin-list" id="adminList"><span style="color:#9ca3af;font-size:0.85rem;">Loading...</span></div>
+          </div>
+          <div class="admin-card-body">
+            <div class="form-group">
+              <label>New Admin Email</label>
+              <input type="email" id="adminEmail" placeholder="name@example.com">
+            </div>
+            <button class="btn-admin purple" onclick="addNewAdmin()">Add Admin</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
