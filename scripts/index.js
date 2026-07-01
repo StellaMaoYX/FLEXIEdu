@@ -137,13 +137,19 @@ function loadIdEmailList() {
       return;
     }
 
-    var html = '<table class="email-table"><thead><tr><th>ID</th><th>Email</th></tr></thead><tbody>';
+    var html = '<table class="email-table"><thead><tr><th>ID</th><th>Email</th><th></th></tr></thead><tbody>';
     Object.keys(data).forEach(function(id) {
-      html += '<tr><td>' + id + '</td><td>' + data[id].email + '</td></tr>';
+      html += '<tr><td>' + id + '</td><td>' + data[id].email + '</td>'
+        + '<td><button class="btn-sm-del" onclick="deleteIdEmail(\'' + id + '\')">✕</button></td></tr>';
     });
     html += '</tbody></table>';
     container.innerHTML = html;
   });
+}
+
+function deleteIdEmail(id) {
+  if (!confirm('Remove User ID ' + id + '?')) return;
+  firebase.database().ref('idEmails/' + id).remove();
 }
 
 function saveIdEmail() {
@@ -182,32 +188,35 @@ function loadRobotList() {
   firebase.database().ref('/robots/').on('value', function(snapshot) {
     robots = snapshot.val();
     var container = document.getElementById('robotList');
-    if (!container || !robots) return;
+    if (!container) return;
+
+    if (!robots || robots.length === 0) {
+      container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
+      return;
+    }
 
     var html = '';
     robots.forEach(function(robot, i) {
       html += '<div class="robot-list-item"><span>' + robot.name + '</span>'
-        + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">Delete</button></div>';
+        + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">✕</button></div>';
     });
-    container.innerHTML = html || '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
+    container.innerHTML = html;
   });
 }
 
 function addNewRobot() {
   var name = document.getElementById('robotName').value.trim();
   if (!name) { alert('Please enter a robot name.'); return; }
-  if (!robots) return;
-
-  var nRobots = robots.length;
-  var newRobotData = Object.assign({}, robots[nRobots - 1]);
-  newRobotData.name = name;
-  var newIndex = nRobots;
 
   var updates = {};
-  updates[newIndex] = newRobotData;
+  var newIndex = robots ? robots.length : 0;
+  var template = (robots && robots.length > 0) ? Object.assign({}, robots[robots.length - 1]) : {};
+  template.name = name;
+  updates[newIndex] = template;
+
   firebase.database().ref('/robots/').update(updates).then(function() {
     document.getElementById('robotName').value = '';
-  });
+  }).catch(function(err) { alert('Error: ' + err.message); });
 }
 
 function deleteRobot(index) {
@@ -223,13 +232,19 @@ function loadAdminList() {
   firebase.database().ref('/administrators/').on('value', function(snapshot) {
     admins = snapshot.val();
     var container = document.getElementById('adminList');
-    if (!container || !admins) return;
+    if (!container) return;
+
+    if (!admins) {
+      container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No admins.</span>';
+      return;
+    }
 
     var html = '';
-    Object.values(admins).forEach(function(email) {
-      html += '<div class="admin-list-item">' + email + '</div>';
+    Object.keys(admins).forEach(function(key) {
+      html += '<div class="admin-list-item"><span>' + admins[key] + '</span>'
+        + '<button class="btn-sm-del" onclick="deleteAdmin(\'' + key + '\')">✕</button></div>';
     });
-    container.innerHTML = html || '<span style="color:#9ca3af;font-size:0.85rem;">No admins.</span>';
+    container.innerHTML = html;
   });
 }
 
@@ -239,13 +254,16 @@ function addNewAdmin() {
     alert('Please enter a valid email address.');
     return;
   }
-  if (!admins) return;
 
-  var keys = Object.keys(admins);
-  var newIndex = Number(keys[keys.length - 1]) + 1;
+  var newIndex = admins ? Number(Object.keys(admins).pop()) + 1 : 0;
   var updates = {};
   updates[newIndex] = email;
   firebase.database().ref('/administrators/').update(updates).then(function() {
     document.getElementById('adminEmail').value = '';
-  });
+  }).catch(function(err) { alert('Error: ' + err.message); });
+}
+
+function deleteAdmin(key) {
+  if (!confirm('Remove admin ' + admins[key] + '?')) return;
+  firebase.database().ref('/administrators/' + key).remove();
 }
