@@ -12,7 +12,7 @@ firebase.initializeApp({
 });
 
 firebase.auth().onAuthStateChanged(function(user) {
-  if (user) {
+  if (user && !user.isAnonymous) {
     onSignedIn(user);
   } else {
     onSignedOut();
