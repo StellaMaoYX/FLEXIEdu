@@ -199,17 +199,24 @@ function loadRobotList() {
     var container = document.getElementById('robotList');
     if (!container) return;
 
-    if (!robots || robots.length === 0) {
+    if (!robots) {
       container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
       return;
     }
 
+    // Firebase may return array or object depending on key structure
+    var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
+
     var html = '';
-    robots.forEach(function(robot, i) {
-      html += '<div class="robot-list-item"><span>' + robot.name + '</span>'
+    robotArray.forEach(function(robot, i) {
+      if (!robot) return;
+      html += '<div class="robot-list-item"><span>' + (robot.name || '(unnamed)') + '</span>'
         + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">✕</button></div>';
     });
-    container.innerHTML = html;
+    container.innerHTML = html || '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
+  }, function(error) {
+    var container = document.getElementById('robotList');
+    if (container) container.innerHTML = '<span style="color:#991b1b;font-size:0.85rem;">Error: ' + error.message + '</span>';
   });
 }
 
