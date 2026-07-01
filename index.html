@@ -185,6 +185,123 @@
       text-decoration: none;
     }
 
+    /* Email linking section */
+    .email-section {
+      margin-top: 40px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      border: 1px solid #e8ecf0;
+      overflow: hidden;
+    }
+
+    .email-section-header {
+      padding: 22px 28px 18px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .email-section-header .badge-tag {
+      margin-bottom: 0;
+    }
+
+    .email-section-header h2 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+    }
+
+    .email-section-body {
+      padding: 24px 28px 28px;
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .email-table-wrap {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .email-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+
+    .email-table th {
+      background: #f8fafc;
+      color: #374151;
+      font-weight: 600;
+      padding: 10px 16px;
+      border: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    .email-table td {
+      padding: 9px 16px;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+    }
+
+    .email-table tr:nth-child(even) td {
+      background: #f9fafb;
+    }
+
+    .email-form-wrap {
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .email-form-wrap label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .email-form-wrap select,
+    .email-form-wrap input[type="email"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #111827;
+      background: #f9fafb;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .email-form-wrap select:focus,
+    .email-form-wrap input[type="email"]:focus {
+      border-color: #6366f1;
+      background: #fff;
+    }
+
+    .btn-save {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-save:hover {
+      background: #4f46e5;
+    }
+
     .footer {
       padding: 20px 0 0;
       color: #9ca3af;
@@ -358,6 +475,38 @@
     <!-- Hidden: Robot Programming -->
     <div style="display:none;">
       <a href="robotprogramming/index.html">Robot Programming</a>
+    </div>
+
+    <!-- Email ↔ User ID Linking -->
+    <div class="email-section">
+      <div class="email-section-header">
+        <div class="badge-tag" style="background:#ede9fe;color:#6d28d9;margin-bottom:0;">Admin</div>
+        <h2>Link Gmail to User ID</h2>
+      </div>
+      <div class="email-section-body">
+        <div class="email-table-wrap">
+          <div id="idEmailList" style="color:#6b7280;font-style:italic;">Loading...</div>
+        </div>
+        <div class="email-form-wrap">
+          <div>
+            <label for="userId">User ID</label>
+            <select id="userId">
+              <option value="0">0</option><option value="1">1</option>
+              <option value="2">2</option><option value="3">3</option>
+              <option value="4">4</option><option value="5">5</option>
+              <option value="6">6</option><option value="7">7</option>
+              <option value="8">8</option><option value="9">9</option>
+              <option value="10">10</option><option value="11">11</option>
+              <option value="12">12</option><option value="13">13</option>
+            </select>
+          </div>
+          <div>
+            <label for="linkedEmail">Gmail</label>
+            <input type="email" id="linkedEmail" placeholder="name@example.com">
+          </div>
+          <button class="btn-save" onclick="saveIdEmail()">Save / Update</button>
+        </div>
+      </div>
     </div>
 
     <div class="footer">&copy; FLEXI Educational Platform</div>

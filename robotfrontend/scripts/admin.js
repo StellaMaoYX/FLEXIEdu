@@ -141,100 +141,54 @@ function addNewAdmin() {
   }
 }
 
-async function loadIdEmailList() {
-  const container = document.getElementById("idEmailList");
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/admin/id-emails`);
-    const data = await res.json();
-
-    let html = "<table class='table table-bordered'><tr><th>ID</th><th>Email</th></tr>";
-
-    for (let i = 0; i <= 13; i++) {
-      html += `
-        <tr>
-          <td>${i}</td>
-          <td>${data[i] || "<em>Not assigned</em>"}</td>
-        </tr>
-      `;
-    }
-
-    html += "</table>";
-    container.innerHTML = html;
-  } catch (err) {
-    container.innerHTML = "Failed to load ID-email list.";
-    console.error(err);
-  }
-}
-function adminReady() {
-  console.log("Firebase ready");
-  loadIdEmailList();
-}
-
 function saveIdEmail() {
-    var userId = document.getElementById("userId").value;
-    var email = document.getElementById("linkedEmail").value.trim().toLowerCase();
+  var userId = document.getElementById("userId").value;
+  var email = document.getElementById("linkedEmail").value.trim().toLowerCase();
 
-    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
 
-    if (!emailPattern.test(email)) {
-        alert("Please enter a valid email address.");
-        return;
-    }
-
-    firebase.database().ref("idEmails").once("value")
-        .then(function(snapshot) {
-
-            var data = snapshot.val() || {};
-
-            for (var id in data) {
-                if (
-                    id !== userId &&
-                    data[id].email &&
-                    data[id].email.toLowerCase() === email
-                ) {
-                    alert("This email is already assigned to User ID " + id);
-                    return;
-                }
-            }
-
-            return firebase.database().ref("idEmails/" + userId).set({
-                email: email
-            });
-        })
-        .then(function() {
-            alert("Email saved successfully!");
-            loadIdEmailList();
-        })
-        .catch(function(error) {
-            if (error) {
-                alert("Error: " + error.message);
-            }
-        });
+  firebase.database().ref("idEmails").once("value")
+    .then(function(snapshot) {
+      var data = snapshot.val() || {};
+      for (var id in data) {
+        if (id !== userId && data[id].email && data[id].email.toLowerCase() === email) {
+          throw new Error("duplicate:" + id);
+        }
+      }
+      return firebase.database().ref("idEmails/" + userId).set({ email: email });
+    })
+    .then(function() {
+      alert("Email saved successfully!");
+    })
+    .catch(function(error) {
+      if (error.message.startsWith("duplicate:")) {
+        var conflictId = error.message.split(":")[1];
+        alert(email + " is already registered to User ID " + conflictId + ". Please remove or update the existing assignment first.");
+      } else {
+        alert("Error: " + error.message);
+      }
+    });
 }
 
 function loadIdEmailList() {
-
   firebase.database().ref("idEmails").on("value", function(snapshot) {
-
     var data = snapshot.val();
+    var container = document.getElementById("idEmailList");
 
     if (!data) {
-      document.getElementById("idEmailList").innerHTML =
-        "<div class='alert alert-info'>No email registrations found.</div>";
+      container.innerHTML = "<div class='alert alert-info'>No email registrations found.</div>";
       return;
     }
 
-    var html =
-      "<table class='table table-bordered'>" +
-      "<tr><th>User ID</th><th>Email</th></tr>";
-
+    var html = "<table class='table table-bordered'><tr><th>User ID</th><th>Email</th></tr>";
     Object.keys(data).forEach(function(id) {
       html += "<tr><td>" + id + "</td><td>" + data[id].email + "</td></tr>";
     });
-
     html += "</table>";
-
-    document.getElementById("idEmailList").innerHTML = html;
+    container.innerHTML = html;
   });
 }
