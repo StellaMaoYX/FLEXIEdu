@@ -12,10 +12,13 @@ function signInWithGoogle() {
   });
 }
 
-// Entry point called by database.js when Firebase is ready
+// Called by database.js whenever a non-anonymous user signs in.
+// Register onAuthStateChanged only once; filter out anonymous sessions.
 function databaseReady() {
+  if (window._authListenerSet) return;
+  window._authListenerSet = true;
   firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
+    if (user && !user.isAnonymous) {
       onSignedIn(user);
     } else {
       onSignedOut();
@@ -61,7 +64,7 @@ function onSignedOut() {
 }
 
 function handleSignOut() {
-  firebase.auth().signOut();
+  firebase.auth().signOut().then(onSignedOut);
 }
 
 // ── Role views ───────────────────────────────────────────────────────────────
