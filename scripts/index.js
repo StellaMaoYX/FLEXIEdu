@@ -1,9 +1,23 @@
 var robots = null;
 var admins = null;
 
-// Initialize Firebase via the external Config/Database classes
-var _config = new Config();
-var _db = new Database(_config.config, databaseReady);
+// Initialize Firebase directly
+firebase.initializeApp({
+  apiKey: "AIzaSyB10dHhQqD1TMXTJfQNLmFkrJtVyQ4JTuA",
+  authDomain: "flexi-f7d77.firebaseapp.com",
+  databaseURL: "https://flexi-f7d77-default-rtdb.firebaseio.com",
+  projectId: "flexi-f7d77",
+  storageBucket: "flexi-f7d77.appspot.com",
+  messagingSenderId: "441373455093"
+});
+
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    onSignedIn(user);
+  } else {
+    onSignedOut();
+  }
+});
 
 function signInWithGoogle() {
   var provider = new firebase.auth.GoogleAuthProvider();
@@ -11,20 +25,6 @@ function signInWithGoogle() {
     if (error.code !== 'auth/cancelled-popup-request' &&
         error.code !== 'auth/popup-closed-by-user') {
       alert('Sign-in failed: ' + error.message);
-    }
-  });
-}
-
-// Called by database.js whenever a non-anonymous user signs in.
-// Register onAuthStateChanged only once; filter out anonymous sessions.
-function databaseReady() {
-  if (window._authListenerSet) return;
-  window._authListenerSet = true;
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (user && !user.isAnonymous) {
-      onSignedIn(user);
-    } else {
-      onSignedOut();
     }
   });
 }
