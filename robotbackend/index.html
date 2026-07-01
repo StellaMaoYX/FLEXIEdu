@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Robot Display – FLEXI Educational Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
     * { box-sizing: border-box; }
@@ -31,6 +32,27 @@
       background: #fff;
       border-bottom: 1px solid #e0e0e0;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #374151;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .btn-home:hover {
+      background: #e2e8f0;
+      color: #111827;
+      text-decoration: none;
     }
 
     .page-wrapper {
@@ -217,7 +239,7 @@
 <body>
   <div class="topbar">
     <div class="topbar-left" id="topLeft"></div>
-    <div class="topbar-right" id="top"></div>
+    <a class="btn-home" href="../index.html">&#8592; Home</a>
   </div>
 
   <div class="page-wrapper">
