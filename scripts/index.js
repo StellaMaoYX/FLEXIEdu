@@ -194,6 +194,8 @@ function saveIdEmail() {
 // ── Admin: Robots ────────────────────────────────────────────────────────────
 
 function loadRobotList() {
+  var container = document.getElementById('robotList');
+  if (container) container.innerHTML = '<span style="color:#6b7280;font-size:0.85rem;">Fetching...</span>';
   firebase.database().ref('/robots/').on('value', function(snapshot) {
     robots = snapshot.val();
     var container = document.getElementById('robotList');
