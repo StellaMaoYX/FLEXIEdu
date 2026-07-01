@@ -7,9 +7,7 @@ var _db = new Database(_config.config, databaseReady);
 
 function signInWithGoogle() {
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).catch(function(error) {
-    alert('Sign-in failed: ' + error.message);
-  });
+  firebase.auth().signInWithRedirect(provider);
 }
 
 // Called by database.js whenever a non-anonymous user signs in.
