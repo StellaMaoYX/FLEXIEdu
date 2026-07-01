@@ -21,7 +21,11 @@ firebase.auth().onAuthStateChanged(function(user) {
 
 function signInWithGoogle() {
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).catch(function(error) {
+  firebase.auth().signInWithPopup(provider).then(function(result) {
+    if (result && result.user) {
+      onSignedIn(result.user);
+    }
+  }).catch(function(error) {
     if (error.code !== 'auth/cancelled-popup-request' &&
         error.code !== 'auth/popup-closed-by-user') {
       alert('Sign-in failed: ' + error.message);
