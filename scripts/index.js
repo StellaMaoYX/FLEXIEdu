@@ -1,6 +1,17 @@
 var robots = null;
 var admins = null;
 
+// Initialize Firebase via the external Config/Database classes
+var _config = new Config();
+var _db = new Database(_config.config, databaseReady);
+
+function signInWithGoogle() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(function(error) {
+    alert('Sign-in failed: ' + error.message);
+  });
+}
+
 // Entry point called by database.js when Firebase is ready
 function databaseReady() {
   firebase.auth().onAuthStateChanged(function(user) {
@@ -85,28 +96,16 @@ function checkTeacherRole(email) {
 
 function setRobotIdStatus(state, robotId) {
   var el = document.getElementById('robotIdStatus');
-  var badge = document.getElementById('accountBadge');
+  if (!el) return;
 
   if (state === 'locked') {
-    el.innerHTML = '<div class="status-icon">🔒</div><div class="status-hint">Please sign in below</div>';
-    badge.textContent = 'Your Account';
-    badge.style.background = '#f3f4f6';
-    badge.style.color = '#374151';
+    el.innerHTML = '<span>🔒</span><span style="color:#9ca3af;font-style:italic;">Please sign in below</span>';
   } else if (state === 'admin') {
-    el.innerHTML = '<div class="status-icon">🛡️</div><div class="robot-id-label">Signed in as</div><div class="robot-id-number" style="font-size:1.8rem;">Administrator</div>';
-    badge.textContent = 'Admin';
-    badge.style.background = '#ede9fe';
-    badge.style.color = '#6d28d9';
+    el.innerHTML = '<span>🛡️</span><span style="font-weight:600;color:#6d28d9;">Administrator</span>';
   } else if (state === 'teacher') {
-    el.innerHTML = '<div class="status-icon">🤖</div><div class="robot-id-label">Your Robot ID</div><div class="robot-id-number">' + robotId + '</div>';
-    badge.textContent = 'Teacher-facing';
-    badge.style.background = '#fef3c7';
-    badge.style.color = '#b45309';
+    el.innerHTML = '<span>🤖</span><span style="font-weight:700;font-size:1.1rem;color:#1a1a2e;">Robot ' + robotId + '</span>';
   } else {
-    el.innerHTML = '<div class="status-icon">❓</div><div class="status-hint">No robot assigned to your account.<br>Contact an admin.</div>';
-    badge.textContent = 'Not assigned';
-    badge.style.background = '#fee2e2';
-    badge.style.color = '#991b1b';
+    el.innerHTML = '<span>❓</span><span style="color:#991b1b;">No robot assigned — contact an admin</span>';
   }
 }
 
