@@ -43,12 +43,12 @@ function loadRobots() {
     document.getElementById('robots').innerHTML = robotListHTML;
     document.getElementById('selectedRobot').innerHTML = robotNames[currentRobot] || ('Robot ' + currentRobot);
 
-    // Lock dropdown for non-admins
     if (!isAdmin) {
-      var btn = document.querySelector('.selector-bar .btn.dropdown-toggle');
-      if (btn) {
-        btn.style.pointerEvents = 'none';
-        btn.style.cursor = 'default';
+      var bar = document.querySelector('.selector-bar');
+      if (bar) {
+        var robotName = robotNames[currentRobot] || ('Robot ' + currentRobot);
+        bar.innerHTML = '<span style="font-size:1rem;font-weight:600;color:#374151;">Your Robot:</span>'
+          + '<span style="font-size:1rem;font-weight:700;color:#1a1a2e;">' + robotName + '</span>';
       }
     }
 
