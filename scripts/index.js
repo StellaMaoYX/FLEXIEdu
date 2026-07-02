@@ -90,8 +90,17 @@ function handleSignOut() {
 
 // ── Role views ───────────────────────────────────────────────────────────────
 
+function setButtonUrls(isAdmin, robotId) {
+  var params = isAdmin ? '?role=admin' : '?robotId=' + robotId;
+  var btnDisplay = document.getElementById('btnRobotDisplay');
+  var btnTeacher = document.getElementById('btnTeacherDash');
+  if (btnDisplay) btnDisplay.href = 'robotbackend/index.html' + params;
+  if (btnTeacher) btnTeacher.href = 'robotfrontend/index.html' + params;
+}
+
 function showAdminView() {
   setRobotIdStatus('admin');
+  setButtonUrls(true, null);
   var panel = document.getElementById('adminPanel');
   panel.classList.add('visible');
   loadIdEmailList();
@@ -110,6 +119,7 @@ function checkTeacherRole(email) {
     });
     if (robotId !== null) {
       setRobotIdStatus('teacher', robotId);
+      setButtonUrls(false, robotId);
     } else {
       setRobotIdStatus('unknown');
     }

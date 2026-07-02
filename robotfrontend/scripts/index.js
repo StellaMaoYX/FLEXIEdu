@@ -1,100 +1,75 @@
+// Read URL params set by homepage
+var urlParams = new URLSearchParams(window.location.search);
+var isAdmin = urlParams.get('role') === 'admin';
+var lockedRobotId = urlParams.get('robotId') !== null ? parseInt(urlParams.get('robotId')) : (isAdmin ? null : 0);
+
 var config = new Config();
-var db = new Database(config.config, databaseReadyCallback);
-var currentRobot = 0;
+var db = new Database(config.config, null);
+var currentRobot = lockedRobotId !== null ? lockedRobotId : 0;
 var robotNames = [];
+var robotsLoaded = false;
 
-function databaseReadyCallback() {
-  var dbRef = firebase.database().ref('/');
-  dbRef.on("value", updateUserRobotInfo);
-}
-
-function signInWithGoogle() {
-  Database.signInWithGoogle();
-}
-
-function signOutFromGoogle() {
-  Database.signOut();
-}
-
-function updateUserRobotInfo(snapshot) {
-  let database = snapshot.val();
-  let robotListHTML = "";
-  if (Database.uid != null) {
-    let userData = database.users[Database.uid];
-    if (userData != undefined)
-      if (userData.currentRobot != undefined)
-        currentRobot = userData.currentRobot;
-    let robots = database.robots;
-    let admins = database.administrators;
-
-    robotNames = [];
-    for (var i=0; i<robots.length; i++) {
-      robotNames.push(robots[i].name);
-      robotListHTML += "<a class='dropdown-item' href='#' onclick='setRobot(" + i + ")'>" + robots[i].name + "</a>";
-    }
-    
-    var robotsDiv = document.getElementById("robots");
-    robotsDiv.innerHTML = robotListHTML;
-    
-    var selectedRobotDiv = document.getElementById("selectedRobot");
-    if (currentRobot == -1)
-      selectedRobotDiv.innerHTML = "Select robot";
-    else
-      selectedRobotDiv.innerHTML = robotNames[currentRobot];
-
-    if (Database.isAnonymous || Database.userEmail == null){
-      disableButton("adminButton");
-      //TODO: Ultimtely most things should not be available anonymously.
-    } else {
-      // Check if the user is in the admin list
-
-      if (admins.includes(Database.userEmail)){
-        enableButton("adminButton");
+// Fire once any auth state is established (anonymous or Google)
+function waitForAuth() {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user && !robotsLoaded) {
+        robotsLoaded = true;
+        loadRobots();
       }
-      else
-        disableButton("adminButton");
-    }
+    });
+  } else {
+    setTimeout(waitForAuth, 200);
   }
 }
+waitForAuth();
 
-function setRobot(robotId) {
-  console.log("Setting robot: " + robotId);
-  var dir = '/users/'+ (Database.uid) + "/";
-  var dbRef = firebase.database().ref(dir);
-  dbRef.update({currentRobot:robotId});
+function loadRobots() {
+  firebase.database().ref('/robots/').once('value').then(function(snapshot) {
+    var robots = snapshot.val();
+    if (!robots) return;
+
+    var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
+    robotNames = robotArray.map(function(r) { return r ? (r.name || '') : ''; });
+
+    var robotListHTML = '';
+    if (isAdmin) {
+      robotArray.forEach(function(robot, i) {
+        if (!robot) return;
+        robotListHTML += "<a class='dropdown-item' href='#' onclick='selectRobot(" + i + ")'>" + robot.name + "</a>";
+      });
+    }
+
+    document.getElementById('robots').innerHTML = robotListHTML;
+    document.getElementById('selectedRobot').innerHTML = robotNames[currentRobot] || ('Robot ' + currentRobot);
+
+    // Lock dropdown for non-admins
+    if (!isAdmin) {
+      var btn = document.querySelector('.selector-bar .btn.dropdown-toggle');
+      if (btn) {
+        btn.style.pointerEvents = 'none';
+        btn.style.cursor = 'default';
+      }
+    }
+
+    // Hide admin card for non-admins
+    var adminButton = document.getElementById('adminButton');
+    if (adminButton) adminButton.style.display = isAdmin ? '' : 'none';
+  });
 }
 
-function disableButton(buttonID) {
-  var button = document.getElementById(buttonID);
-  button.disabled = true;
+function selectRobot(robotId) {
+  if (!isAdmin) return;
+  currentRobot = robotId;
+  document.getElementById('selectedRobot').innerHTML = robotNames[currentRobot];
 }
 
-function enableButton(buttonID) {
-  var button = document.getElementById(buttonID);
-  button.disabled = false;
-}
+function signInWithGoogle() { Database.signInWithGoogle(); }
+function signOutFromGoogle() { Database.signOut(); }
 
-function startEditor() {
-  window.location.href = "edit.html";
-}
-
-function startBellyEditor() {
-  window.location.href = "bellyEdit.html?robot=" + currentRobot;
-}
-
-function startAdmin() {
-  window.location.href = "admin.html";
-}
-
-function startSetup() {
-  window.location.href = "setup.html?robot=" + currentRobot;
-}
-
-function startController() {
-  window.location.href = "control.html?robot=" + currentRobot;
-}
-
-function startFlexi() {
-  window.location.href = "sentence-ordering.html?robot=" + currentRobot;
-}
-
+function startController() { window.location.href = 'control.html?robot=' + currentRobot; }
+function startEditor()     { window.location.href = 'edit.html'; }
+function startBellyEditor(){ window.location.href = 'bellyEdit.html?robot=' + currentRobot; }
+function startSetup()      { window.location.href = 'setup.html?robot=' + currentRobot; }
+function startFlexi()      { window.location.href = 'sentence-ordering.html?robot=' + currentRobot; }
+function startAdmin()      { window.location.href = 'admin.html'; }
