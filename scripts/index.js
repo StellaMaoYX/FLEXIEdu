@@ -255,15 +255,7 @@ function addNewRobot() {
     if (existingKeys.length > 0) nextKey = Math.max.apply(null, existingKeys) + 1;
   }
 
-  // Copy last robot's config as template, replace name
-  var template = {};
-  if (robots) {
-    var lastKey = Object.keys(robots).pop();
-    if (lastKey !== undefined && robots[lastKey]) template = Object.assign({}, robots[lastKey]);
-  }
-  template.name = name;
-
-  firebase.database().ref('/robots/' + nextKey).set(template).then(function() {
+  firebase.database().ref('/robots/' + nextKey).set({ name: name }).then(function() {
     document.getElementById('robotName').value = '';
   }).catch(function(err) { alert('Error: ' + err.message); });
 }
