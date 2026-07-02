@@ -262,18 +262,44 @@ function addNewRobot() {
 
 function renameRobot(key) {
   var robot = robots && robots[key];
-  var current = robot ? (robot.name || '') : '';
-  var newName = prompt('Rename "' + current + '" to:', current);
+  var current = (robot && robot.name) ? robot.name : '';
+  var newName = prompt('Rename "' + (current || '(unnamed)') + '" to:', current);
   if (newName === null || !newName.trim()) return;
-  firebase.database().ref('/robots/' + key + '/name').set(newName.trim())
+  // Rebuild the full robots object with the name updated at this key
+  var updated = buildRobotsWithChange(key, { name: newName.trim() });
+  firebase.database().ref('/robots/').set(updated)
     .catch(function(err) { alert('Error: ' + err.message); });
 }
 
 function deleteRobot(key) {
-  if (!robots || !robots[key]) return;
-  if (!confirm('Delete "' + robots[key].name + '"?')) return;
-  firebase.database().ref('/robots/' + key).remove()
+  if (!robots) return;
+  var robot = robots[key];
+  var name = (robot && robot.name) ? robot.name : '(unnamed)';
+  if (!confirm('Delete "' + name + '"?')) return;
+  // Rebuild without this key, re-index from 0, drop null/empty entries
+  var updated = {};
+  var newIndex = 0;
+  Object.keys(robots).forEach(function(k) {
+    if (String(k) !== String(key) && robots[k]) {
+      updated[newIndex++] = robots[k];
+    }
+  });
+  firebase.database().ref('/robots/').set(Object.keys(updated).length > 0 ? updated : null)
     .catch(function(err) { alert('Error: ' + err.message); });
+}
+
+function buildRobotsWithChange(key, changes) {
+  var updated = {};
+  var newIndex = 0;
+  Object.keys(robots).forEach(function(k) {
+    if (!robots[k]) return; // skip null/empty
+    if (String(k) === String(key)) {
+      updated[newIndex++] = Object.assign({}, robots[k], changes);
+    } else {
+      updated[newIndex++] = robots[k];
+    }
+  });
+  return updated;
 }
 
 // ── Admin: Admins ────────────────────────────────────────────────────────────
