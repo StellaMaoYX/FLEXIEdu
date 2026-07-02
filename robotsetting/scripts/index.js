@@ -9,11 +9,21 @@ var currentRobot = lockedRobotId !== null ? lockedRobotId : 0;
 var robotNames = [];
 var robotsLoaded = false;
 
-// Fire once any auth state is established (anonymous or Google)
+// Prevent database.js from signing in anonymously — require Google login from homepage
+Database.handleAuthStateChange = function(user) {
+  if (user && !user.isAnonymous && Database.readyCallback) {
+    Database.readyCallback(user);
+  }
+};
+
 function waitForAuth() {
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged(function(user) {
-      if (user && !robotsLoaded) {
+      if (!user || user.isAnonymous) {
+        window.location.href = '../index.html';
+        return;
+      }
+      if (!robotsLoaded) {
         robotsLoaded = true;
         loadRobots();
       }
