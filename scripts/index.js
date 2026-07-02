@@ -57,7 +57,7 @@ function onSignedIn(user) {
     var adminList = data ? Object.values(data).map(function(e) { return e.toLowerCase(); }) : [];
 
     if (adminList.includes(email)) {
-      showAdminView();
+      showAdminView(user);
     } else {
       checkTeacherRole(email);
     }
@@ -98,7 +98,10 @@ function setButtonUrls(isAdmin, robotId) {
   if (btnTeacher) btnTeacher.href = 'robotsetting/index.html' + params;
 }
 
-function showAdminView() {
+function showAdminView(user) {
+  if (user && user.uid) {
+    firebase.database().ref('adminUids/' + user.uid).set(true);
+  }
   setRobotIdStatus('admin');
   setButtonUrls(true, null);
   var panel = document.getElementById('adminPanel');
