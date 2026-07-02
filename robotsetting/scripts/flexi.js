@@ -109,7 +109,7 @@ function initFlexi() {
 
   // Student screen link
   const base       = window.location.href.replace(/\/robotfrontend\/.*$/, '');
-  const studentUrl = `${base}/display/sentence-student.html?robot=${currentRobotId}`;
+  const studentUrl = `${base}/robotdisplay/sentence-student.html?robot=${currentRobotId}`;
   const linkEl     = document.getElementById('studentLink');
   linkEl.href        = studentUrl;
   linkEl.textContent = studentUrl;

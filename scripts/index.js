@@ -94,8 +94,8 @@ function setButtonUrls(isAdmin, robotId) {
   var params = isAdmin ? '?role=admin' : '?robotId=' + robotId;
   var btnDisplay = document.getElementById('btnRobotDisplay');
   var btnTeacher = document.getElementById('btnTeacherDash');
-  if (btnDisplay) btnDisplay.href = 'display/index.html' + params;
-  if (btnTeacher) btnTeacher.href = 'teacher/index.html' + params;
+  if (btnDisplay) btnDisplay.href = 'robotdisplay/index.html' + params;
+  if (btnTeacher) btnTeacher.href = 'robotsetting/index.html' + params;
 }
 
 function showAdminView() {
