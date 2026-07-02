@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Robot Display – FLEXI Educational Platform</title>
+  <title>Teacher Dashboard – FLEXI Educational Platform</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
@@ -22,6 +22,7 @@
       background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 18px;
+      color: #111827;
     }
 
     .topbar {
@@ -60,7 +61,7 @@
       display: flex;
       flex-direction: column;
       padding: 48px 40px 40px;
-      max-width: 1100px;
+      max-width: 1200px;
       width: 100%;
       margin: 0 auto;
     }
@@ -117,11 +118,11 @@
       background: #f0f4f8;
     }
 
-    /* Cards grid */
+    /* Cards grid — 3 columns */
     .cards-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 28px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
     }
 
     .flexi-card {
@@ -141,40 +142,35 @@
     }
 
     .card-header-block {
-      padding: 28px 28px 20px;
+      padding: 24px 24px 18px;
       border-bottom: 1px solid #f0f0f0;
     }
 
     .badge-tag {
       display: inline-block;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       border-radius: 20px;
-      padding: 5px 14px;
-      margin-bottom: 14px;
+      padding: 4px 12px;
+      margin-bottom: 12px;
     }
 
-    .badge-display {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    .badge-activity {
-      background: #dcfce7;
-      color: #166534;
-    }
+    .badge-control  { background: #fef3c7; color: #b45309; }
+    .badge-edit     { background: #ede9fe; color: #6d28d9; }
+    .badge-activity { background: #dcfce7; color: #166534; }
+    .badge-admin    { background: #fee2e2; color: #991b1b; }
 
     .card-header-block h2 {
-      font-size: 1.6rem;
+      font-size: 1.45rem;
       font-weight: 700;
       color: #111827;
       margin: 0;
     }
 
     .card-body-block {
-      padding: 24px 28px 28px;
+      padding: 20px 24px 24px;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -182,44 +178,62 @@
 
     .card-body-block p {
       color: #4b5563;
-      font-size: 1.05rem;
+      font-size: 1rem;
       line-height: 1.65;
       flex: 1;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
+    /* Buttons */
     .btn-launch {
-      display: inline-block;
-      padding: 13px 24px;
+      display: block;
+      width: 100%;
+      padding: 12px 20px;
       border-radius: 10px;
       font-size: 1rem;
       font-weight: 600;
-      text-decoration: none;
       text-align: center;
-      transition: background 0.15s, opacity 0.15s;
       cursor: pointer;
       border: none;
-      width: 100%;
+      transition: background 0.15s, opacity 0.15s;
+      color: #fff;
+      margin-bottom: 8px;
     }
 
-    .btn-display {
-      background: #0ea5e9;
-      color: #fff;
+    .btn-launch:last-child { margin-bottom: 0; }
+
+    .btn-control  { background: #f59e0b; }
+    .btn-control:hover  { background: #d97706; }
+
+    .btn-edit     { background: #8b5cf6; }
+    .btn-edit:hover     { background: #7c3aed; }
+
+    .btn-activity { background: #22c55e; }
+    .btn-activity:hover { background: #16a34a; }
+
+    .btn-admin    { background: #ef4444; }
+    .btn-admin:hover    { background: #dc2626; }
+
+    /* Google sign-in area */
+    .google-signin-area {
+      margin-bottom: 12px;
     }
 
-    .btn-display:hover {
-      background: #0284c7;
-      color: #fff;
+    .btn-google {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
     }
 
-    .btn-activity {
-      background: #22c55e;
-      color: #fff;
+    .img-button {
+      height: 40px;
     }
 
-    .btn-activity:hover {
-      background: #16a34a;
-      color: #fff;
+    #googleSignInInfo {
+      font-size: 0.9rem;
+      color: #374151;
+      margin-bottom: 8px;
     }
 
     .footer {
@@ -229,7 +243,11 @@
       text-align: center;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
       .cards-grid { grid-template-columns: 1fr; }
       .hero h1 { font-size: 2rem; }
       .page-wrapper { padding: 32px 20px 28px; }
@@ -244,13 +262,13 @@
 
   <div class="page-wrapper">
     <div class="hero">
-      <h1>Robot Display</h1>
-      <p>Student-facing screens — face, belly, and lesson activities</p>
+      <h1>Teacher Dashboard</h1>
+      <p>Control, configure, and manage your classroom robot</p>
     </div>
 
     <!-- Robot selector -->
     <div class="selector-bar">
-      <label for="robotDropdown">Select robot:</label>
+      <label>Select robot:</label>
       <div class="btn-group">
         <button class="btn dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <span id="selectedRobot">
@@ -262,30 +280,54 @@
       </div>
     </div>
 
-    <!-- 2×2 card grid -->
+    <!-- 3-column grid -->
     <div class="cards-grid">
 
-      <!-- Robot Face Rendering -->
+      <!-- Robot Control (WoZ) -->
       <div class="flexi-card">
         <div class="card-header-block">
-          <div class="badge-tag badge-display">Display</div>
-          <h2>Robot Face Rendering</h2>
+          <div class="badge-tag badge-control">Control</div>
+          <h2>Robot Control (WoZ)</h2>
         </div>
         <div class="card-body-block">
-          <p>Select a robot above and press the button to set up your tablet screen as the robot's face.</p>
-          <button class="btn-launch btn-display" onclick="startPageWithRobot('render-face')" id="renderButton">Start Face Renderer</button>
+          <p>Select a robot above and press the button to start controlling the robot's actions (Wizard of Oz) from your browser.</p>
+          <button class="btn-launch btn-control" onclick="startController()" id="controlButton">Start Robot Controller</button>
         </div>
       </div>
 
-      <!-- Robot Belly Rendering -->
+      <!-- Face Editing -->
       <div class="flexi-card">
         <div class="card-header-block">
-          <div class="badge-tag badge-display">Display</div>
-          <h2>Robot Belly Rendering</h2>
+          <div class="badge-tag badge-edit">Editing</div>
+          <h2>Face Editing</h2>
         </div>
         <div class="card-body-block">
-          <p>Select a robot above and press the button to set up your screen as the robot's belly.</p>
-          <button class="btn-launch btn-display" onclick="startPageWithRobot('render-belly')" id="bellyButton">Start Belly Renderer</button>
+          <p>Press button to start the face editor to customize your faces or create new faces.</p>
+          <button class="btn-launch btn-edit" type="button" onclick="startEditor()" id="editButton">Start Face Editor</button>
+        </div>
+      </div>
+
+      <!-- Belly Editor -->
+      <div class="flexi-card">
+        <div class="card-header-block">
+          <div class="badge-tag badge-edit">Editing</div>
+          <h2>Belly Editor</h2>
+        </div>
+        <div class="card-body-block">
+          <p>Press button to start the belly editor to customize your belly screen or create new screens.</p>
+          <button class="btn-launch btn-edit" type="button" onclick="startBellyEditor()">Start Belly Editor</button>
+        </div>
+      </div>
+
+      <!-- Robot Setup -->
+      <div class="flexi-card">
+        <div class="card-header-block">
+          <div class="badge-tag badge-control">Control</div>
+          <h2>Robot Setup</h2>
+        </div>
+        <div class="card-body-block">
+          <p>Select a robot above and press the button to set up its face and other parameters, before starting to control it.</p>
+          <button class="btn-launch btn-control" onclick="startSetup()" id="setupButton">Start Robot Setup</button>
         </div>
       </div>
 
@@ -296,22 +338,11 @@
           <h2>Sentence Ordering Activity</h2>
         </div>
         <div class="card-body-block">
-          <p>Open the sentence ordering activity screen on this device. The teacher pushes content from the Frontend Tools page.</p>
-          <button class="btn-launch btn-activity" onclick="startPageWithRobot('flexi-student')" id="flexiStudentButton">Start Sentence Ordering Activity</button>
+          <p>Launch the sentence ordering activity: drag-and-drop sentence sequencing, vocabulary audio, robot feedback, and teacher controls.</p>
+          <button class="btn-launch btn-activity" onclick="startFlexi()" id="flexiButton">Start Sentence Ordering Activity</button>
         </div>
       </div>
 
-      <!-- Sentence Ordering – Robot Face -->
-      <div class="flexi-card">
-        <div class="card-header-block">
-          <div class="badge-tag badge-activity">Activity</div>
-          <h2>Sentence Ordering – Robot Face</h2>
-        </div>
-        <div class="card-body-block">
-          <p>Display the robot face for the sentence ordering activity. Reacts to student results in real time.</p>
-          <button class="btn-launch btn-activity" onclick="startPageWithRobot('render-face-sentence-activity')">Start Robot Face</button>
-        </div>
-      </div>
 
     </div>
 
@@ -321,8 +352,8 @@
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script src="../display/scripts/config.js"></script>
   <script src="../databasejs/scripts/database.js"></script>
-  <script src="scripts/config.js"></script>
   <script src="scripts/index.js"></script>
 </body>
 </html>

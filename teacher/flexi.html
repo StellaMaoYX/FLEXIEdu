@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sentence Ordering Activity – Teacher</title>
+  <title>FLEXI Teacher Interface</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
     * { box-sizing: border-box; }
@@ -235,18 +235,12 @@
       border: 2px solid #e0e4f0;
       margin-bottom: 4px;
     }
-    .result-box.waiting    { background: #f8f9fe; }
-    .result-box.answering  { background: #eef4ff; border-color: #9dbcf5; }
-    .result-box.correct    { background: #146e3c; border-color: #146e3c; color: white; }
-    .result-box.incorrect  { background: #46465a; border-color: #46465a; color: white; }
-    .result-box.correct .result-time,
-    .result-box.incorrect .result-time { color: rgba(255,255,255,0.55); }
+    .result-box.waiting  { background: #f8f9fe; }
+    .result-box.correct  { background: #eafaf1; border-color: #1a7a4a; }
+    .result-box.incorrect { background: #fdf2f2; border-color: #c0392b; }
     .result-emoji { font-size: 2rem; margin-bottom: 4px; }
     .result-label { font-weight: bold; font-size: 0.95rem; }
-    .result-sub   { font-size: 0.88rem; margin-top: 3px; opacity: 0.88; }
-    .result-time  { font-size: 0.75rem; color: #999; margin-top: 4px; }
-    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-    .result-box.answering .result-emoji { animation: blink 1.4s ease-in-out infinite; }
+    .result-time  { font-size: 0.75rem; color: #999; margin-top: 2px; }
 
     /* ── Control buttons ── */
     .ctrl-btn {
@@ -328,79 +322,6 @@
       line-height: 1.4;
       margin-top: 4px;
     }
-
-    /* ── Activity Queue ── */
-    .queue-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 2px solid #e0e4f0;
-      border-radius: 9px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      background: #f8f9fe;
-      transition: all 0.12s;
-    }
-    .queue-item:hover { border-color: #1a56a0; background: #eef4ff; }
-    .queue-item.active { border-color: #1a56a0; background: #dbeaff; font-weight: bold; }
-    .queue-num {
-      font-size: 0.78rem;
-      font-weight: bold;
-      color: #888;
-      min-width: 20px;
-      text-align: center;
-    }
-    .queue-title {
-      flex: 1;
-      font-size: 0.9rem;
-      color: #333;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .queue-rm {
-      border: none;
-      background: none;
-      color: #e74c3c;
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-    }
-    .queue-rm:hover { background: #fde; }
-    .queue-drag { color: #ccc; cursor: grab; font-size: 1rem; padding: 0 2px; flex-shrink: 0; }
-    .queue-item.dragging  { opacity: 0.4; }
-    .queue-item.drag-over { border-color: #1a56a0; background: #dbeaff; transform: translateY(-2px); }
-    .add-queue-btn {
-      width: 100%;
-      padding: 7px;
-      border: 2px dashed #9dbcf5;
-      border-radius: 8px;
-      background: none;
-      color: #1a56a0;
-      font-size: 0.88rem;
-      cursor: pointer;
-      margin-top: 2px;
-      margin-bottom: 8px;
-      transition: all 0.12s;
-    }
-    .add-queue-btn:hover { background: #eef4ff; border-color: #1a56a0; }
-    .save-queue-btn {
-      width: 100%;
-      padding: 8px;
-      background: #f39c12;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.12s;
-    }
-    .save-queue-btn:hover { background: #d68910; }
-    .save-status { text-align: center; font-size: 0.8rem; color: #888; min-height: 16px; margin-top: 4px; }
-    .save-status.ok { color: #1a7a4a; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -408,7 +329,7 @@
   <!-- Top bar -->
   <div class="topbar">
     <a href="index.html">&#8592; Back</a>
-    <span class="topbar-center">&#9881; Sentence Ordering – Teacher Interface</span>
+    <span class="topbar-center">&#9881; FLEXI – Teacher Interface</span>
     <span id="robotBadge" style="font-size:0.85rem;padding:4px 10px;background:rgba(255,255,255,0.15);border-radius:12px;">&#9888; No robot</span>
   </div>
 
@@ -417,15 +338,15 @@
     <!-- ═══ LEFT: Content Editor ═══════════════════════════════════════════ -->
     <div>
 
-      <!-- Activity queue -->
+      <!-- Preset activity loader -->
       <div class="card" style="margin-bottom:16px;">
-        <div class="card-head">&#128203; Activity Queue</div>
+        <div class="card-head">&#128196; Load a Preset Activity</div>
         <div class="card-body">
-          <div id="queueList"></div>
-          <button class="add-queue-btn" onclick="addActivity()">&#43; Add Activity</button>
-          <button class="save-queue-btn" onclick="saveQueue()">&#128190; Save Queue</button>
-          <div class="save-status" id="saveStatus"></div>
-          <p class="hint-note" style="margin-top:6px;">Click an activity to edit it. Saved to this browser — stays after refresh.</p>
+          <div class="preset-row">
+            <select class="preset-select" id="presetSelect"></select>
+            <button class="preset-load-btn" onclick="loadPreset()">Load</button>
+          </div>
+          <p class="hint-note">Loading a preset fills the editor below. You can then edit it before pushing to the student screen.</p>
         </div>
       </div>
 
@@ -436,12 +357,6 @@
 
           <label class="field-label">Activity Title</label>
           <input class="field-input" type="text" id="edTitle" placeholder="e.g. Life Cycle of a Butterfly">
-
-          <div class="level-btns" style="margin-bottom:12px;" id="editorLevelTabs">
-            <button class="level-btn" data-level="word"     onclick="switchEditorLevel('word')">Word</button>
-            <button class="level-btn" data-level="phrase"   onclick="switchEditorLevel('phrase')">Phrase</button>
-            <button class="level-btn active" data-level="sentence" onclick="switchEditorLevel('sentence')">Sentence</button>
-          </div>
 
           <label class="field-label">Instruction (students see this)</label>
           <input class="field-input" type="text" id="edInstruction" placeholder="e.g. Put these steps in the correct order!">
@@ -501,8 +416,9 @@
         <div class="card-head">&#128100; Teacher Controls</div>
         <div class="card-body">
           <p class="section-title">Activity</p>
-          <button class="ctrl-btn" onclick="sendCommand('reset')">&#9851; Reset Student Screen</button>
-          <button class="ctrl-btn" onclick="skipToNext()">&#9197; Skip to Next</button>
+          <button class="ctrl-btn" onclick="sendCommand('reset')">&#128260; Reset Student Screen</button>
+          <button class="ctrl-btn" onclick="sendCommand('tryAgain')">&#128170; Try Again</button>
+          <button class="ctrl-btn" onclick="sendCommand('skip')">&#9197; Skip to Next</button>
           <button class="ctrl-btn" onclick="sendCommand('repeat')">&#128257; Repeat Instructions</button>
 
           <p class="section-title" style="margin-top:10px;">Language Level</p>
@@ -514,7 +430,7 @@
         </div>
       </div>
 
-      <!-- Teacher materials (disabled)
+      <!-- Teacher materials -->
       <div class="card">
         <div class="card-head">&#128193; Teacher Materials</div>
         <div class="card-body">
@@ -529,7 +445,6 @@
           <ul class="resource-list" id="resourceList"></ul>
         </div>
       </div>
-      -->
 
     </div><!-- /right-col -->
   </div><!-- /main-grid -->
@@ -537,9 +452,9 @@
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <script src="../robotbackend/scripts/config.js"></script>
+  <script src="../display/scripts/config.js"></script>
   <script src="../databasejs/scripts/database.js"></script>
   <script src="../robotapijs/scripts/robotapi.js"></script>
-  <script src="scripts/sentence-ordering.js"></script>
+  <script src="scripts/flexi.js"></script>
 </body>
 </html>

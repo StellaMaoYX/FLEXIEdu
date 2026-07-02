@@ -68,8 +68,8 @@ function signInWithGoogle() { Database.signInWithGoogle(); }
 function signOutFromGoogle() { Database.signOut(); }
 
 function startController() { window.location.href = 'control.html?robot=' + currentRobot; }
-function startEditor()     { window.location.href = 'edit.html'; }
-function startBellyEditor(){ window.location.href = 'bellyEdit.html?robot=' + currentRobot; }
+function startEditor()     { window.location.href = 'face-editor.html'; }
+function startBellyEditor(){ window.location.href = 'belly-editor.html?robot=' + currentRobot; }
 function startSetup()      { window.location.href = 'setup.html?robot=' + currentRobot; }
 function startFlexi()      { window.location.href = 'sentence-ordering.html?robot=' + currentRobot; }
 function startAdmin()      { window.location.href = 'admin.html'; }
