@@ -27,7 +27,10 @@ waitForAuth();
 function loadRobots() {
   firebase.database().ref('/robots/').once('value').then(function(snapshot) {
     var robots = snapshot.val();
-    if (!robots) return;
+    if (!robots) {
+      document.getElementById('selectedRobot').innerHTML = 'No robots found';
+      return;
+    }
 
     var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
     robotNames = robotArray.map(function(r) { return r ? (r.name || '') : ''; });
@@ -55,6 +58,8 @@ function loadRobots() {
     // Hide admin card for non-admins
     var adminButton = document.getElementById('adminButton');
     if (adminButton) adminButton.style.display = isAdmin ? '' : 'none';
+  }).catch(function(err) {
+    document.getElementById('selectedRobot').innerHTML = 'Error: ' + err.message;
   });
 }
 
