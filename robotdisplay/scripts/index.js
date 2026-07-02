@@ -25,6 +25,19 @@ function waitForAuth() {
 waitForAuth();
 
 function loadRobots() {
+  if (!isAdmin) {
+    firebase.database().ref('/robots/' + currentRobot).once('value').then(function(snapshot) {
+      var robot = snapshot.val();
+      var robotName = (robot && robot.name) ? robot.name : ('Robot ' + currentRobot);
+      var bar = document.querySelector('.selector-bar');
+      if (bar) {
+        bar.innerHTML = '<span style="font-size:1rem;font-weight:600;color:#374151;">Your Robot:</span>'
+          + '<span style="font-size:1rem;font-weight:700;color:#1a1a2e;">' + robotName + '</span>';
+      }
+    });
+    return;
+  }
+
   firebase.database().ref('/robots/').once('value').then(function(snapshot) {
     var robots = snapshot.val();
     if (!robots) return;
@@ -33,24 +46,13 @@ function loadRobots() {
     robotNames = robotArray.map(function(r) { return r ? (r.name || '') : ''; });
 
     var robotListHTML = '';
-    if (isAdmin) {
-      robotArray.forEach(function(robot, i) {
-        if (!robot) return;
-        robotListHTML += "<a class='dropdown-item' href='#' onclick='selectRobot(" + i + ")'>" + robot.name + "</a>";
-      });
-    }
+    robotArray.forEach(function(robot, i) {
+      if (!robot) return;
+      robotListHTML += "<a class='dropdown-item' href='#' onclick='selectRobot(" + i + ")'>" + robot.name + "</a>";
+    });
 
     document.getElementById('robots').innerHTML = robotListHTML;
     document.getElementById('selectedRobot').innerHTML = robotNames[currentRobot] || ('Robot ' + currentRobot);
-
-    if (!isAdmin) {
-      var bar = document.querySelector('.selector-bar');
-      if (bar) {
-        var robotName = robotNames[currentRobot] || ('Robot ' + currentRobot);
-        bar.innerHTML = '<span style="font-size:1rem;font-weight:600;color:#374151;">Your Robot:</span>'
-          + '<span style="font-size:1rem;font-weight:700;color:#1a1a2e;">' + robotName + '</span>';
-      }
-    }
   });
 }
 
