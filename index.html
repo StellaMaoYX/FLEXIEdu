@@ -416,6 +416,19 @@
 
     .btn-sm-del:hover { background: #fecaca; }
 
+    .btn-sm-edit {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-sm-edit:hover { background: #bae6fd; }
+
     .admin-list { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; max-height: 220px; }
 
     .admin-list-item {
@@ -639,24 +652,16 @@
       </div>
       <div class="admin-grid">
 
-        <!-- Link Gmail to User ID -->
+        <!-- Assign Robot -->
         <div class="admin-card">
           <div class="admin-card-header">
-            <h3>Link Gmail to User ID</h3>
+            <h3>Assign Robot</h3>
             <div id="idEmailList" style="color:#9ca3af;font-size:0.85rem;">Loading...</div>
           </div>
           <div class="admin-card-body">
             <div class="form-group">
-              <label>User ID</label>
-              <select id="userId">
-                <option value="0">0</option><option value="1">1</option>
-                <option value="2">2</option><option value="3">3</option>
-                <option value="4">4</option><option value="5">5</option>
-                <option value="6">6</option><option value="7">7</option>
-                <option value="8">8</option><option value="9">9</option>
-                <option value="10">10</option><option value="11">11</option>
-                <option value="12">12</option><option value="13">13</option>
-              </select>
+              <label>Robot</label>
+              <select id="robotSelect"><option value="">Loading robots...</option></select>
             </div>
             <div class="form-group">
               <label>Gmail</label>

@@ -152,13 +152,15 @@ function loadIdEmailList() {
     if (!container) return;
 
     if (!data) {
-      container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No registrations yet.</span>';
+      container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No assignments yet.</span>';
       return;
     }
 
-    var html = '<table class="email-table"><thead><tr><th>ID</th><th>Email</th><th></th></tr></thead><tbody>';
+    var robotArray = robots ? (Array.isArray(robots) ? robots : Object.values(robots)) : [];
+    var html = '<table class="email-table"><thead><tr><th>Robot</th><th>Email</th><th></th></tr></thead><tbody>';
     Object.keys(data).forEach(function(id) {
-      html += '<tr><td>' + id + '</td><td>' + data[id].email + '</td>'
+      var robotName = (robotArray[id] && robotArray[id].name) ? robotArray[id].name : ('Robot ' + id);
+      html += '<tr><td>' + robotName + '</td><td>' + data[id].email + '</td>'
         + '<td><button class="btn-sm-del" onclick="deleteIdEmail(\'' + id + '\')">✕</button></td></tr>';
     });
     html += '</tbody></table>';
@@ -172,7 +174,7 @@ function deleteIdEmail(id) {
 }
 
 function saveIdEmail() {
-  var userId = document.getElementById('userId').value;
+  var userId = document.getElementById('robotSelect').value;
   var email = document.getElementById('linkedEmail').value.trim().toLowerCase();
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -220,12 +222,20 @@ function loadRobotList() {
     var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
 
     var html = '';
+    var selectHtml = '';
     robotArray.forEach(function(robot, i) {
       if (!robot) return;
-      html += '<div class="robot-list-item"><span>' + (robot.name || '(unnamed)') + '</span>'
-        + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">✕</button></div>';
+      var name = robot.name || '(unnamed)';
+      html += '<div class="robot-list-item"><span>' + name + '</span>'
+        + '<div style="display:flex;gap:4px;">'
+        + '<button class="btn-sm-edit" onclick="renameRobot(' + i + ')">✎</button>'
+        + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">✕</button>'
+        + '</div></div>';
+      selectHtml += '<option value="' + i + '">' + name + '</option>';
     });
     container.innerHTML = html || '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
+    var sel = document.getElementById('robotSelect');
+    if (sel) sel.innerHTML = selectHtml || '<option value="">No robots</option>';
   }, function(error) {
     var container = document.getElementById('robotList');
     if (container) container.innerHTML = '<span style="color:#991b1b;font-size:0.85rem;">Error: ' + error.message + '</span>';
@@ -245,6 +255,15 @@ function addNewRobot() {
   firebase.database().ref('/robots/').update(updates).then(function() {
     document.getElementById('robotName').value = '';
   }).catch(function(err) { alert('Error: ' + err.message); });
+}
+
+function renameRobot(index) {
+  var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
+  var current = robotArray[index] ? (robotArray[index].name || '') : '';
+  var newName = prompt('Rename "' + current + '" to:', current);
+  if (newName === null || !newName.trim()) return;
+  firebase.database().ref('/robots/' + index + '/name').set(newName.trim())
+    .catch(function(err) { alert('Error: ' + err.message); });
 }
 
 function deleteRobot(index) {
