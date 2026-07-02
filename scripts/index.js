@@ -99,16 +99,22 @@ function setButtonUrls(isAdmin, robotId) {
 }
 
 function showAdminView(user) {
-  if (user && user.uid) {
-    firebase.database().ref('adminUids/' + user.uid).set(true);
-  }
   setRobotIdStatus('admin');
   setButtonUrls(true, null);
   var panel = document.getElementById('adminPanel');
   panel.classList.add('visible');
-  loadIdEmailList();
-  loadRobotList();
   loadAdminList();
+
+  var afterUid = function() {
+    loadIdEmailList();
+    loadRobotList();
+  };
+
+  if (user && user.uid) {
+    firebase.database().ref('adminUids/' + user.uid).set(true).then(afterUid).catch(afterUid);
+  } else {
+    afterUid();
+  }
 }
 
 function checkTeacherRole(email) {
