@@ -215,23 +215,25 @@ function loadRobotList() {
 
     if (!robots) {
       container.innerHTML = '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
+      var sel = document.getElementById('robotSelect');
+      if (sel) sel.innerHTML = '<option value="">No robots</option>';
       return;
     }
 
-    // Firebase may return array or object depending on key structure
-    var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
-
+    // Always iterate by actual Firebase keys to avoid index/key mismatch
+    var keys = Object.keys(robots);
     var html = '';
     var selectHtml = '';
-    robotArray.forEach(function(robot, i) {
+    keys.forEach(function(key) {
+      var robot = robots[key];
       if (!robot) return;
       var name = robot.name || '(unnamed)';
       html += '<div class="robot-list-item"><span>' + name + '</span>'
         + '<div style="display:flex;gap:4px;">'
-        + '<button class="btn-sm-edit" onclick="renameRobot(' + i + ')">✎</button>'
-        + '<button class="btn-sm-del" onclick="deleteRobot(' + i + ')">✕</button>'
+        + '<button class="btn-sm-edit" onclick="renameRobot(\'' + key + '\')">✎</button>'
+        + '<button class="btn-sm-del" onclick="deleteRobot(\'' + key + '\')">✕</button>'
         + '</div></div>';
-      selectHtml += '<option value="' + i + '">' + name + '</option>';
+      selectHtml += '<option value="' + key + '">' + name + '</option>';
     });
     container.innerHTML = html || '<span style="color:#9ca3af;font-size:0.85rem;">No robots yet.</span>';
     var sel = document.getElementById('robotSelect');
@@ -246,31 +248,40 @@ function addNewRobot() {
   var name = document.getElementById('robotName').value.trim();
   if (!name) { alert('Please enter a robot name.'); return; }
 
-  var updates = {};
-  var newIndex = robots ? robots.length : 0;
-  var template = (robots && robots.length > 0) ? Object.assign({}, robots[robots.length - 1]) : {};
-  template.name = name;
-  updates[newIndex] = template;
+  // Find next numeric key (max existing key + 1, or 0)
+  var nextKey = 0;
+  if (robots) {
+    var existingKeys = Object.keys(robots).map(Number).filter(function(n) { return !isNaN(n); });
+    if (existingKeys.length > 0) nextKey = Math.max.apply(null, existingKeys) + 1;
+  }
 
-  firebase.database().ref('/robots/').update(updates).then(function() {
+  // Copy last robot's config as template, replace name
+  var template = {};
+  if (robots) {
+    var lastKey = Object.keys(robots).pop();
+    if (lastKey !== undefined && robots[lastKey]) template = Object.assign({}, robots[lastKey]);
+  }
+  template.name = name;
+
+  firebase.database().ref('/robots/' + nextKey).set(template).then(function() {
     document.getElementById('robotName').value = '';
   }).catch(function(err) { alert('Error: ' + err.message); });
 }
 
-function renameRobot(index) {
-  var robotArray = Array.isArray(robots) ? robots : Object.values(robots);
-  var current = robotArray[index] ? (robotArray[index].name || '') : '';
+function renameRobot(key) {
+  var robot = robots && robots[key];
+  var current = robot ? (robot.name || '') : '';
   var newName = prompt('Rename "' + current + '" to:', current);
   if (newName === null || !newName.trim()) return;
-  firebase.database().ref('/robots/' + index + '/name').set(newName.trim())
+  firebase.database().ref('/robots/' + key + '/name').set(newName.trim())
     .catch(function(err) { alert('Error: ' + err.message); });
 }
 
-function deleteRobot(index) {
-  if (!robots) return;
-  if (!confirm('Delete ' + robots[index].name + '?')) return;
-  var updated = robots.filter(function(_, i) { return i !== index; });
-  firebase.database().ref('/robots/').set(updated);
+function deleteRobot(key) {
+  if (!robots || !robots[key]) return;
+  if (!confirm('Delete "' + robots[key].name + '"?')) return;
+  firebase.database().ref('/robots/' + key).remove()
+    .catch(function(err) { alert('Error: ' + err.message); });
 }
 
 // ── Admin: Admins ────────────────────────────────────────────────────────────
