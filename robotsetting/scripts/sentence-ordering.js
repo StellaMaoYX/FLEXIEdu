@@ -522,7 +522,7 @@ function pushToStudent() {
   try {
     firebase.database()
       .ref(`/robots/${currentRobotId}/flexi/pushed`)
-      .set(activity)
+      .set(Object.assign({}, activity, { _pushedAt: Date.now() }))
       .then(() => { showPushStatus('✓ Pushed to student screen!', 'ok'); startWaitingMotion(); showAnsweringState(); })
       .catch(e => showPushStatus('Firebase error: ' + e.message, 'error'));
   } catch (e) {

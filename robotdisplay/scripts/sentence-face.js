@@ -207,35 +207,41 @@
   }
 
   // ── Firebase listeners ─────────────────────────────────────────────────────
-  let lastResultTs = 0;
+  let lastResultTs  = 0;
+  let lastPushedTs  = 0;
+  let lastCommandTs = 0;
 
   function startListening(robotId) {
-    const db = firebase.database();
+    const db        = firebase.database();
+    const initTime  = Date.now();
 
-    // Student result → correct or stuck
+    // Student result → correct or stuck (ignore stale results from previous sessions)
     db.ref(`/robots/${robotId}/flexi/result`).on('value', snap => {
       const data = snap.val();
-      if (!data || data.timestamp <= lastResultTs) return;
+      if (!data || data.timestamp <= lastResultTs || data.timestamp < initTime) return;
       lastResultTs = data.timestamp;
       applyState(data.isCorrect ? STATE_CORRECT : STATE_STUCK);
     });
 
-    // New activity pushed → return to working
+    // New activity pushed → return to working (ignore stale)
     db.ref(`/robots/${robotId}/flexi/pushed`).on('value', snap => {
-      if (snap.val()) applyState(STATE_WORKING);
+      const data = snap.val();
+      if (!data || !data._pushedAt || data._pushedAt < initTime) return;
+      applyState(STATE_WORKING);
     });
 
-    // Teacher command reset / tryAgain → return to working
+    // Teacher command reset / tryAgain → return to working (ignore stale)
     db.ref(`/robots/${robotId}/flexi/command`).on('value', snap => {
       const cmd = snap.val();
-      if (!cmd) return;
+      if (!cmd || !cmd.timestamp || cmd.timestamp < initTime) return;
       if (cmd.type === 'reset' || cmd.type === 'tryAgain') applyState(STATE_WORKING);
     });
 
-    // Student clicked Try Again → return to working
+    // Student clicked Try Again → return to working (ignore stale)
     db.ref(`/robots/${robotId}/flexi/studentStatus`).on('value', snap => {
       const data = snap.val();
-      if (data && data.status === 'answering') applyState(STATE_WORKING);
+      if (!data || !data.timestamp || data.timestamp < initTime) return;
+      if (data.status === 'answering') applyState(STATE_WORKING);
     });
   }
 
