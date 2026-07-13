@@ -25,7 +25,13 @@ function waitForAuth() {
       }
       if (!robotsLoaded) {
         robotsLoaded = true;
-        loadRobots();
+        firebase.database().ref('/adminUids/' + user.uid).once('value').then(function(snap) {
+          isAdmin = snap.val() === true;
+          loadRobots();
+        }).catch(function() {
+          isAdmin = false;
+          loadRobots();
+        });
       }
     });
   } else {

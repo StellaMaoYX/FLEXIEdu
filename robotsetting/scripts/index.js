@@ -25,7 +25,14 @@ function waitForAuth() {
       }
       if (!robotsLoaded) {
         robotsLoaded = true;
-        loadRobots();
+        // Verify admin status from Firebase instead of trusting URL param alone
+        firebase.database().ref('/adminUids/' + user.uid).once('value').then(function(snap) {
+          isAdmin = snap.val() === true;
+          loadRobots();
+        }).catch(function() {
+          isAdmin = false;
+          loadRobots();
+        });
       }
     });
   } else {
