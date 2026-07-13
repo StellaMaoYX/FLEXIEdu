@@ -28,6 +28,7 @@ function waitForAuth() {
         // Verify admin status from Firebase instead of trusting URL param alone
         firebase.database().ref('/adminUids/' + user.uid).once('value').then(function(snap) {
           isAdmin = snap.val() === true;
+          console.log('[DEBUG] uid=' + user.uid + ' snap=' + snap.val() + ' isAdmin=' + isAdmin + ' currentRobot=' + currentRobot);
           loadRobots();
         }).catch(function() {
           isAdmin = false;
