@@ -142,6 +142,8 @@ function selectedFaceChanged(target, user, index) {
   target.classList.add('selected');
 
   newParameters = currentUserData.faces[index];
+  Face.isMouthExtended = true;
+  Eyes.isLookingAround = true;
   Face.updateParameters(newParameters);
   updateFaceEditor();
 }
@@ -319,6 +321,7 @@ var DEFAULT_FACE_PARAMS = {
   hasEyelid:             { type:'boolean', name:'Eyelid',                current:1 },
   hasReflection:         { type:'boolean', name:'Eye reflection',        current:1 },
   hasMouth:              { type:'boolean', name:'Show mouth',            current:1 },
+  hasEyeLines:           { type:'boolean', name:'Eye lines',             current:0 },
   isHorizontal:          { type:'boolean', name:'Horizontal layout',     current:1 },
 };
 
@@ -333,8 +336,9 @@ function createNewFace() {
       selectedFace = String(newFaceIndex);
       selectedUser = currentUid;
       newParameters = base;
+      Face.isMouthExtended = true;
+      Eyes.isLookingAround = true;
       Face.updateParameters(base);
-      Face.draw();
       updateFaceEditor();
       document.getElementById('faceName').value = 'New Face';
     });
