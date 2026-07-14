@@ -1,84 +1,301 @@
 <!DOCTYPE html>
-<html lang="en"></html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>EMAR Robot Frontend Tools</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <link rel="stylesheet" href="styles/style.processed.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Editor – FLEXI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f0f4ff; font-family: Arial, Helvetica, sans-serif; min-height: 100vh; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: #1a56a0;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    .topbar a {
+      color: white;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      transition: background 0.15s;
+    }
+    .topbar a:hover { background: rgba(255,255,255,0.25); }
+    .topbar-center { font-size: 1.1rem; font-weight: bold; }
+
+    /* ── Layout ── */
+    .page-body {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(26,86,160,.1);
+      overflow: hidden;
+    }
+    .card-head {
+      background: #1a56a0;
+      color: white;
+      font-size: 0.9rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      padding: 10px 16px;
+      text-transform: uppercase;
+    }
+    .card-body { padding: 16px; }
+
+    /* ── Face thumbnail grid ── */
+    .face-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      min-height: 80px;
+      align-items: flex-start;
+    }
+    .thumb-and-name {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .thumb-and-name p {
+      font-size: 0.75rem;
+      color: #555;
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .face-thumb {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid transparent;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .face-thumb:hover { transform: scale(1.05); border-color: #9dbcf5; }
+    .face-thumb.selected { border-color: #1a56a0 !important; }
+
+    .deletable-thumb {
+      position: relative;
+      display: inline-block;
+    }
+    .delete-x-button {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+    }
+    .btn-circle-sm {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+    }
+    .btn-circle-sm:hover { background: #c0392b; }
+
+    /* ── Action buttons ── */
+    .action-btn {
+      display: inline-block;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: #1a56a0; color: white; }
+    .btn-primary:hover { background: #154583; }
+
+    /* ── Face preview ── */
+    #robotFace {
+      width: 100%;
+      background: #1a56a0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #robotFace svg { width: 100%; display: block; }
+
+    #faceName {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border: 2px solid #dde3f5;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      text-align: center;
+    }
+    #faceName:focus { border-color: #1a56a0; outline: none; }
+
+    /* ── Parameter controls ── */
+    #faceParameters { display: flex; flex-direction: column; gap: 14px; }
+
+    .scale {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px 10px;
+    }
+    .sliderName {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #374151;
+      grid-column: 1 / -1;
+    }
+    .sliderValue {
+      font-size: 0.8rem;
+      color: #1a56a0;
+      font-weight: bold;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+    .min-value input, .max-value input {
+      width: 46px;
+      padding: 3px 5px;
+      border: 1px solid #dde;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+    input[type="range"].slider {
+      width: 100%;
+      accent-color: #1a56a0;
+    }
+
+    .colorPicker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+    .colorPicker > div { display: flex; align-items: center; gap: 6px; }
+    .colorPicker .sliderName { font-size: 0.8rem; color: #374151; }
+    input[type="color"] {
+      width: 36px;
+      height: 28px;
+      border: 1px solid #dde;
+      border-radius: 5px;
+      cursor: pointer;
+      padding: 1px;
+    }
+
+    .bool-picker { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+    .bool-picker > div { display: flex; flex-direction: column; gap: 4px; }
+    .bool-picker .sliderName { font-size: 0.8rem; font-weight: 600; color: #374151; }
+
+    .spinner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    .spinner-dot {
+      width: 8px; height: 8px;
+      background: #1a56a0;
+      border-radius: 50%;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .spinner-dot:nth-child(2) { animation-delay: 0.2s; }
+    .spinner-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+  </style>
 </head>
 <body>
+
   <div class="topbar">
-    <div class="topbar-left" id="topLeft"><a style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;color:#374151;font-size:0.95rem;font-weight:600;text-decoration:none;" href="#" onclick="history.back();return false;">&#8592; Back</a></div>
-    <div class="topbar-right" id="top"></div>
+    <a href="#" onclick="history.back();return false;">← Back</a>
+    <span class="topbar-center">🎨 Face Editor</span>
+    <div></div>
   </div>
-  <div class="container-fluid px-sm-5 pb-4">
-    <div class="row">
-      <div class="col text-center">
-        <h1 class="display-4">Face Editing Panel</h1>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col py-3">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h2>All faces</h2>
-          </div>
-          <div class="card-body h-scrollable green-scroll">
-            <div class="btn-group mr-2" id="otherFaceList"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span></div>
-          </div>
+
+  <div class="page-body">
+
+    <!-- All faces (library) -->
+    <div class="card full-width">
+      <div class="card-head">📚 Face Library</div>
+      <div class="card-body">
+        <div class="face-grid" id="otherFaceList">
+          <div class="spinner"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div> Loading…</div>
         </div>
-        <div class="p-1">
-          <button class="btn btn-success" type="button" onclick="createNewFace()">Add selected face to my faces</button>
+        <div style="margin-top:12px;">
+          <button class="action-btn btn-primary" onclick="createNewFace()">＋ Copy selected face to My Faces</button>
         </div>
       </div>
     </div>
-    <div class="row pb-3">
-      <div class="col">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h2>My faces</h2>
-          </div>
-          <div class="card-body h-scrollable green-scroll">
-            <div class="btn-group mr-2" id="myFaceList"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span></div>
-          </div>
+
+    <!-- My faces -->
+    <div class="card full-width">
+      <div class="card-head">⭐ My Faces</div>
+      <div class="card-body">
+        <div class="face-grid" id="myFaceList">
+          <div class="spinner"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div> Loading…</div>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-sm-7">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h2>Face Parameters</h2>
-          </div>
-          <div class="card-body scrollable green-scroll">
-            <div id="faceParameters"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-5">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h2>Face Preview</h2>
-          </div>
-          <div class="card-body">
-            <div id="robotFace">
-              <svg id="faceSVG"></svg>
-            </div>
-            <div class="d-flex justify-content-center mt-2">
-              <input class="centered" type="text" onblur="faceRenamed()" id="faceName">
-            </div>
-          </div>
+
+    <!-- Parameters -->
+    <div class="card" style="align-self:start;">
+      <div class="card-head">🎛 Face Parameters</div>
+      <div class="card-body" style="max-height:70vh;overflow-y:auto;">
+        <div id="faceParameters">
+          <div class="spinner"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div> Select a face to edit</div>
         </div>
       </div>
     </div>
+
+    <!-- Preview -->
+    <div class="card" style="align-self:start;">
+      <div class="card-head">👁 Preview</div>
+      <div class="card-body">
+        <div id="robotFace">
+          <svg id="faceSVG"></svg>
+        </div>
+        <input type="text" id="faceName" onblur="faceRenamed()" placeholder="Face name…">
+      </div>
+    </div>
+
   </div>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <script src="https://stellamaoyx.github.io/EMARRobotDuplicate/robotdisplay/scripts/config.js"></script>
-  <script src="https://stellamaoyx.github.io/EMARRobotDuplicate/databasejs/scripts/database.js"></script>
-  <script src="https://stellamaoyx.github.io/EMARRobotDuplicate/robotdisplay/scripts/eyes.js"></script>
-  <script src="https://stellamaoyx.github.io/EMARRobotDuplicate/robotdisplay/scripts/face.js"></script>
+
+  <script src="scripts/config.js"></script>
+  <script src="../databasejs/scripts/database.js"></script>
+  <script src="../robotdisplay/scripts/eyes.js"></script>
+  <script src="../robotdisplay/scripts/face.js"></script>
   <script src="scripts/facedata.js"></script>
   <script src="scripts/face-editor.js"></script>
 </body>
+</html>
