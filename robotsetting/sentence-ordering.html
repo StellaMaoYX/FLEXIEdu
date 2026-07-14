@@ -124,7 +124,22 @@
       border-radius: 10px;
       padding: 8px 10px;
       margin-bottom: 7px;
+      transition: box-shadow 0.15s, border-color 0.15s;
     }
+    .editor-item.drag-over {
+      border-color: #1a56a0;
+      box-shadow: 0 0 0 2px #9dbcf5;
+    }
+    .item-drag-handle {
+      font-size: 1.1rem;
+      color: #bbb;
+      cursor: grab;
+      padding-top: 7px;
+      flex-shrink: 0;
+      user-select: none;
+      letter-spacing: -1px;
+    }
+    .item-drag-handle:active { cursor: grabbing; }
     .item-order-num {
       font-size: 0.78rem;
       font-weight: bold;
@@ -438,9 +453,10 @@
           <input class="field-input" type="text" id="edTitle" placeholder="e.g. Life Cycle of a Butterfly">
 
           <div class="level-btns" style="margin-bottom:12px;" id="editorLevelTabs">
-            <button class="level-btn" data-level="word"     onclick="switchEditorLevel('word')">Word</button>
-            <button class="level-btn" data-level="phrase"   onclick="switchEditorLevel('phrase')">Phrase</button>
-            <button class="level-btn active" data-level="sentence" onclick="switchEditorLevel('sentence')">Sentence</button>
+            <button class="level-btn" data-level="word"      onclick="switchEditorLevel('word')">Word</button>
+            <button class="level-btn" data-level="phrase"    onclick="switchEditorLevel('phrase')">Phrase</button>
+            <button class="level-btn active" data-level="sentence"   onclick="switchEditorLevel('sentence')">Sentence</button>
+            <button class="level-btn" data-level="paragraph" onclick="switchEditorLevel('paragraph')">Paragraph</button>
           </div>
 
           <label class="field-label">Instruction (students see this)</label>
@@ -507,9 +523,10 @@
 
           <p class="section-title" style="margin-top:10px;">Language Level</p>
           <div class="level-btns">
-            <button class="level-btn" data-level="word"     onclick="setLevel('word')">Word</button>
-            <button class="level-btn" data-level="phrase"   onclick="setLevel('phrase')">Phrase</button>
-            <button class="level-btn active" data-level="sentence" onclick="setLevel('sentence')">Sentence</button>
+            <button class="level-btn" data-level="word"      onclick="setLevel('word')">Word</button>
+            <button class="level-btn" data-level="phrase"    onclick="setLevel('phrase')">Phrase</button>
+            <button class="level-btn active" data-level="sentence"   onclick="setLevel('sentence')">Sentence</button>
+            <button class="level-btn" data-level="paragraph" onclick="setLevel('paragraph')">Paragraph</button>
           </div>
         </div>
       </div>

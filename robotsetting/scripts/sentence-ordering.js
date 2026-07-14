@@ -254,7 +254,7 @@ function saveCurrentToQueue() {
     image: row.querySelector('.item-img-input').value.trim() || null,
   })).filter(item => item.text);
   const act = activityQueue[activeIndex];
-  if (!act.levels) act.levels = { word: { instruction:'', items:[] }, phrase: { instruction:'', items:[] }, sentence: { instruction:'', items:[] } };
+  if (!act.levels) act.levels = { word: { instruction:'', items:[] }, phrase: { instruction:'', items:[] }, sentence: { instruction:'', items:[] }, paragraph: { instruction:'', items:[] } };
   act.title         = document.getElementById('edTitle').value.trim()   || 'Untitled';
   act.successPhrase = document.getElementById('edSuccess').value.trim() || '';
   act.levels[languageLevel] = {
@@ -273,7 +273,8 @@ function addActivity() {
     levels: {
       word:     { instruction: 'Put these words in order!',    items: [] },
       phrase:   { instruction: 'Put these phrases in order!',  items: [] },
-      sentence: { instruction: 'Put these steps in the correct order!', items: [] },
+      sentence:  { instruction: 'Put these steps in the correct order!', items: [] },
+      paragraph: { instruction: 'Put these paragraphs in the correct order!', items: [] },
     },
   });
   activeIndex = activityQueue.length - 1;
@@ -382,17 +383,30 @@ function setRobotStatus(connected) {
 }
 
 // ── Editor Item Rendering ──────────────────────────────────────────────────
+let dragSrcRow = null;
+
 function renderEditorItems(items) {
   const container = document.getElementById('editorItems');
   container.innerHTML = '';
   items.forEach((item, i) => container.appendChild(buildRow(i, item.text, item.image || '')));
+  refreshRowNumbers();
+}
+
+function refreshRowNumbers() {
+  document.querySelectorAll('#editorItems .editor-item').forEach((row, i) => {
+    const num = row.querySelector('.item-order-num');
+    if (num) num.textContent = i + 1;
+    row.dataset.idx = i;
+  });
 }
 
 function buildRow(index, text, imgUrl) {
   const row = document.createElement('div');
   row.className = 'editor-item';
   row.dataset.idx = index;
+  row.setAttribute('draggable', 'true');
   row.innerHTML = `
+    <span class="item-drag-handle" title="Drag to reorder">⠿</span>
     <span class="item-order-num">${index + 1}</span>
     <div class="item-fields">
       <input class="item-text-input" type="text" placeholder="Word or sentence…" value="${esc(text)}">
@@ -424,6 +438,36 @@ function buildRow(index, text, imgUrl) {
     preview.innerHTML     = url
       ? `<img src="${url}" style="max-height:56px;border-radius:6px;border:1px solid #dde;">`
       : '';
+  });
+
+  // Drag-to-reorder events
+  row.addEventListener('dragstart', e => {
+    dragSrcRow = row;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => row.style.opacity = '0.4', 0);
+  });
+  row.addEventListener('dragend', () => {
+    row.style.opacity = '';
+    document.querySelectorAll('#editorItems .editor-item').forEach(r => r.classList.remove('drag-over'));
+  });
+  row.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (row !== dragSrcRow) row.classList.add('drag-over');
+  });
+  row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+  row.addEventListener('drop', e => {
+    e.preventDefault();
+    row.classList.remove('drag-over');
+    if (!dragSrcRow || dragSrcRow === row) return;
+    const container = document.getElementById('editorItems');
+    const rows = Array.from(container.querySelectorAll('.editor-item'));
+    const srcIdx = rows.indexOf(dragSrcRow);
+    const tgtIdx = rows.indexOf(row);
+    if (srcIdx < tgtIdx) container.insertBefore(dragSrcRow, row.nextSibling);
+    else container.insertBefore(dragSrcRow, row);
+    refreshRowNumbers();
+    saveCurrentToQueue();
   });
 
   return row;
