@@ -74,9 +74,6 @@ function updateUserFaceList() {
     myFaceList.appendChild(wrapper);
   }
 
-  // Hide "Face Library" card since we can't read other users' data
-  var libraryCard = document.getElementById('libraryCard');
-  if (libraryCard) libraryCard.style.display = 'none';
 }
 
 function removeUserFace(index) {
@@ -258,8 +255,8 @@ var DEFAULT_FACE_PARAMS = {
 };
 
 function createNewFace() {
-  if (!currentUserData) return;
-  var newFaceIndex = (currentUserData.faces || []).length;
+  if (!currentUid) return;
+  var newFaceIndex = (currentUserData && currentUserData.faces) ? Object.keys(currentUserData.faces).length : 0;
   var base = newParameters
     ? JSON.parse(JSON.stringify(newParameters))
     : JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
