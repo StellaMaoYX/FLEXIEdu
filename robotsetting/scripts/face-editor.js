@@ -30,7 +30,7 @@ function initializeEdit() {
 }
 
 function faceThumbSVG(p) {
-  var W = 72, H = 72;
+  var W = 108, H = 72;
   var get = function(key, def) {
     var v = p[key];
     return (v && v.current !== undefined) ? v.current : def;
