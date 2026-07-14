@@ -39,8 +39,15 @@ function Face() {
     if (Face.parameters.isHorizontal)
       faceHeight = Math.round(faceWidth*0.5625);
 
-    faceDiv.style.height = faceHeight + "px";  
+    faceDiv.style.height = faceHeight + "px";
     faceDiv.style.backgroundColor = Face.parameters.backgroundColor;
+
+    // Store the viewBox dimensions so drawMouth/drawNose/etc. can compute
+    // pixel coordinates in the same coordinate space as the viewBox, instead
+    // of relying on svg.clientWidth/clientHeight (which can briefly disagree
+    // with the just-set viewBox depending on layout timing).
+    Face.svgWidth = faceWidth;
+    Face.svgHeight = faceHeight;
 
     var svg = document.getElementById("faceSVG");
     svg.innerHTML = "";
@@ -70,8 +77,8 @@ function Face() {
 
   Face.drawBackground = function() {
     var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
 
     var background = document.getElementById("backgroundRect");
     var bubbleExists = (background != null);
@@ -88,8 +95,8 @@ function Face() {
   
   Face.drawSpeechBubble = function(hasText) {
     var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
 
     var bubble = document.getElementById("bubbleRect");
     var bubbleExists = (bubble != null);
@@ -152,8 +159,8 @@ function Face() {
   Face.drawNose = function() {
 
     var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
 
     var nose = document.getElementById("nose");
     var noseExists = (nose != null);
@@ -198,8 +205,8 @@ function Face() {
 
   Face.drawMouth = function() {
     var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
 
     /* Draw the rectangle first */
     // var rect = document.createElementNS(svgNS, "rect");

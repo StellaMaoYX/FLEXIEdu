@@ -63,8 +63,7 @@ function Eyes() {
   }
 
   Eyes.getOuterRadius = function() {
-    var svg = document.getElementById("faceSVG");
-    var svgWidth = svg.clientWidth;
+    var svgWidth = Face.svgWidth;
     return Math.round(svgWidth * Eyes.getOuterRadiusPercent() / 100.0);
   }
 
@@ -124,9 +123,8 @@ function Eyes() {
 
   Eyes.setEyeOffset = function(xOffset, yOffset) {
     var reflectionOffset = Eyes.getPupilRadiusPercent() - 3;
-    var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
     yOffset = yOffset*Face.parameters.eyeShapeRatio*svgWidth/svgHeight;
 
     Eyes.setEyeCircleOffset("InnerRight", xOffset, yOffset, false);
@@ -247,8 +245,7 @@ function Eyes() {
     isBlinking,
     isLooking
   ) {
-    var svg = document.getElementById("faceSVG");
-    var svgWidth = svg.clientWidth;
+    var svgWidth = Face.svgWidth;
     var radius = Math.round(svgWidth * radiusPercent / 100.0);
     Eyes.drawEyeCircleWithRadius(
       xPercent,
@@ -306,9 +303,8 @@ function Eyes() {
   }
 
   Eyes.drawEyeLines = function(xPercent, yPercent, radiusPercent, color, strokeWidth) {
-    var svg = document.getElementById("faceSVG");
-    var svgHeight = svg.clientHeight;
-    var svgWidth = svg.clientWidth;
+    var svgHeight = Face.svgHeight;
+    var svgWidth = Face.svgWidth;
     var radius = Math.round(svgWidth * radiusPercent / 100.0);
     var x = Math.round(svgWidth * xPercent / 100.0);
     var y = Math.round(svgHeight * yPercent / 100.0);
