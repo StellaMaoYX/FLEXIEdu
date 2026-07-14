@@ -318,11 +318,19 @@ var DEFAULT_FACE_PARAMS = {
 function createNewFace() {
   if (!currentUid) return;
   var newFaceIndex = (currentUserData && currentUserData.faces) ? Object.keys(currentUserData.faces).length : 0;
-  var base = newParameters
-    ? JSON.parse(JSON.stringify(newParameters))
-    : JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
+  var base = JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
   base.name = 'New Face';
-  firebase.database().ref('users/' + currentUid + '/faces/' + newFaceIndex + '/').set(base);
+  firebase.database().ref('users/' + currentUid + '/faces/' + newFaceIndex + '/').set(base)
+    .then(function() {
+      // Auto-select the new face so preview shows immediately
+      selectedFace = String(newFaceIndex);
+      selectedUser = currentUid;
+      newParameters = base;
+      Face.updateParameters(base);
+      Face.draw();
+      updateFaceEditor();
+      document.getElementById('faceName').value = 'New Face';
+    });
 }
 
 // globals needed by facedata.js stubs
