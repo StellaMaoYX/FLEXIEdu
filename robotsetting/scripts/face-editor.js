@@ -97,7 +97,7 @@ function updateUserFaceList() {
     var thumb = document.createElement('div');
     thumb.className = 'face-thumb';
     thumb.title = name;
-    thumb.innerHTML = faceThumbSVG(faceData);
+    thumb.innerHTML = faceData.thumbSVG || faceThumbSVG(faceData);
     thumb.dataset.index = i;
     thumb.onclick = (function(el, idx) {
       return function() { selectedFaceChanged(el, currentUid, idx); };
@@ -267,6 +267,18 @@ function saveFace() {
   if (!currentUid || selectedFace === null || !newParameters) return;
   var name = document.getElementById('faceName').value;
   newParameters.name = name;
+
+  // Capture current preview SVG as thumbnail
+  var svgEl = document.getElementById('faceSVG');
+  if (svgEl) {
+    var w = svgEl.clientWidth, h = svgEl.clientHeight;
+    var clone = svgEl.cloneNode(true);
+    clone.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    clone.removeAttribute('width');
+    clone.removeAttribute('height');
+    newParameters.thumbSVG = clone.outerHTML;
+  }
+
   firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').set(newParameters)
     .then(function() {
       var btn = document.querySelector('button[onclick="saveFace()"]');
