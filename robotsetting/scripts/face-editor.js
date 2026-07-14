@@ -284,6 +284,13 @@ function saveFace() {
     clone.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
     clone.removeAttribute('width');
     clone.removeAttribute('height');
+    // Strip every id (root + descendants, e.g. "faceSVG", "mouth", "OuterLeft"...)
+    // so this saved snapshot can never collide with the live preview's ids once
+    // it's inserted into the "My Faces" thumbnail list -- a duplicate "faceSVG"
+    // id would hijack every document.getElementById("faceSVG") lookup in
+    // face.js/eyes.js, silently redirecting all drawing into this thumbnail.
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(function(el) { el.removeAttribute('id'); });
     thumbSVG = clone.outerHTML;
   }
 
