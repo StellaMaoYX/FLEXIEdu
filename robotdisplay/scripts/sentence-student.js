@@ -26,9 +26,9 @@ function initStudent() {
     .ref(`/robots/${currentRobotId}/flexi/pushed`)
     .on('value', snapshot => {
       const data = snapshot.val();
-      if (data && data.items && data.items.length > 0) {
-        startActivity(data);
-      }
+      if (!data || !data.items) return;
+      const rawItems = Array.isArray(data.items) ? data.items : Object.values(data.items);
+      if (rawItems.length > 0) startActivity({ ...data, items: rawItems });
     });
 
   firebase.database()
