@@ -29,19 +29,64 @@ function initializeEdit() {
   });
 }
 
+function faceThumbSVG(p) {
+  var W = 72, H = 72;
+  var get = function(key, def) {
+    var v = p[key];
+    return (v && v.current !== undefined) ? v.current : def;
+  };
+  var bg     = get('backgroundColor',      '#1a56a0');
+  var eOuter = get('eyeOuterColor',        '#cfe2ff');
+  var eInner = get('eyeInnerColor',        '#0d2550');
+  var ePupil = get('eyePupilColor',        '#3a6fcc');
+  var mColor = get('mouthColor',           '#cfe2ff');
+  var dist   = get('eyeCenterDistPercent', 22) / 100;
+  var eyeY   = get('eyeYPercent',          40) / 100;
+  var eyeR   = get('eyeOuterRadiusPercent',10) / 100;
+  var ratio  = get('eyeShapeRatio',        1.5);
+  var innerP = get('eyeInnerRadiusPercent',72) / 100;
+  var pupilP = get('eyePupilRadiusPercent',55) / 100;
+  var mouthY = get('mouthYPercent',        76) / 100 * H;
+  var mouthW = get('mouthWPercent',         5) / 100 * W;
+  var mouthH = get('mouthH',              14) * (W / 300);
+  var hasMouth = get('hasMouth', 1);
+
+  var rx = W * eyeR, ry = rx / ratio;
+  var irx = rx * innerP, iry = ry * innerP;
+  var prx = irx * pupilP, pry = iry * pupilP;
+  var lx = W * (0.5 - dist), rx2 = W * (0.5 + dist), cy = H * eyeY;
+
+  var s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">'
+    + '<rect width="' + W + '" height="' + H + '" rx="10" fill="' + bg + '"/>'
+    + '<ellipse cx="' + lx  + '" cy="' + cy + '" rx="' + rx  + '" ry="' + ry  + '" fill="' + eOuter + '"/>'
+    + '<ellipse cx="' + lx  + '" cy="' + cy + '" rx="' + irx + '" ry="' + iry + '" fill="' + eInner + '"/>'
+    + '<ellipse cx="' + lx  + '" cy="' + cy + '" rx="' + prx + '" ry="' + pry + '" fill="' + ePupil + '"/>'
+    + '<ellipse cx="' + rx2 + '" cy="' + cy + '" rx="' + rx  + '" ry="' + ry  + '" fill="' + eOuter + '"/>'
+    + '<ellipse cx="' + rx2 + '" cy="' + cy + '" rx="' + irx + '" ry="' + iry + '" fill="' + eInner + '"/>'
+    + '<ellipse cx="' + rx2 + '" cy="' + cy + '" rx="' + prx + '" ry="' + pry + '" fill="' + ePupil + '"/>';
+  if (hasMouth) {
+    var x1 = W/2 - mouthW, x2 = W/2 + mouthW;
+    s += '<path d="M ' + x1 + ' ' + mouthY + ' Q ' + (W/2) + ' ' + (mouthY + mouthH*2) + ' '
+      + x2 + ' ' + mouthY + '" fill="none" stroke="' + mColor + '" stroke-width="2.5" stroke-linecap="round"/>';
+  }
+  return s + '</svg>';
+}
+
 function updateUserFaceList() {
   var myFaceList = document.getElementById('myFaceList');
   myFaceList.innerHTML = '';
 
   var faces = currentUserData && currentUserData.faces;
-  if (!faces || faces.length === 0) {
-    myFaceList.innerHTML = '<p style="color:#aaa;font-size:0.9rem;">No faces yet. Add one below.</p>';
+  if (!faces || Object.keys(faces).length === 0) {
+    myFaceList.innerHTML = '<p style="color:#aaa;font-size:0.9rem;">No faces yet. Click “+ New Face” to add one.</p>';
     return;
   }
 
-  for (var i = 0; i < faces.length; i++) {
-    var name = faces[i].name || '…';
-    var imgSrc = (faces[i].thumb) || '';
+  var keys = Object.keys(faces);
+  for (var ki = 0; ki < keys.length; ki++) {
+    var i = keys[ki];
+    var faceData = faces[i];
+    var name = faceData.name || '…';
 
     var wrapper = document.createElement('div');
     wrapper.className = 'deletable-thumb';
@@ -49,20 +94,19 @@ function updateUserFaceList() {
     var inner = document.createElement('div');
     inner.className = 'thumb-and-name';
 
-    var img = document.createElement('img');
-    img.className = 'face-thumb';
-    img.src = imgSrc;
-    img.title = name;
-    img.dataset.user = currentUid;
-    img.dataset.index = i;
-    img.onclick = (function(el, idx) {
+    var thumb = document.createElement('div');
+    thumb.className = 'face-thumb';
+    thumb.title = name;
+    thumb.innerHTML = faceThumbSVG(faceData);
+    thumb.dataset.index = i;
+    thumb.onclick = (function(el, idx) {
       return function() { selectedFaceChanged(el, currentUid, idx); };
-    })(img, i);
+    })(thumb, i);
 
     var label = document.createElement('p');
     label.textContent = name;
 
-    inner.appendChild(img);
+    inner.appendChild(thumb);
     inner.appendChild(label);
 
     var delBtn = document.createElement('div');

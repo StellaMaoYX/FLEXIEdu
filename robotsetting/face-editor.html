@@ -92,11 +92,14 @@
     .face-thumb {
       width: 72px;
       height: 72px;
-      object-fit: cover;
       border-radius: 10px;
       border: 3px solid transparent;
       transition: border-color 0.15s, transform 0.1s;
+      cursor: pointer;
+      overflow: hidden;
+      display: block;
     }
+    .face-thumb svg { display: block; width: 100%; height: 100%; }
     .face-thumb:hover { transform: scale(1.05); border-color: #9dbcf5; }
     .face-thumb.selected { border-color: #1a56a0 !important; }
 
