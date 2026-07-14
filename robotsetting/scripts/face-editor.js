@@ -226,13 +226,43 @@ function faceRenamed() {
   firebase.database().ref('users/' + Database.uid + '/faces/' + selectedFace + '/').update({ name: name });
 }
 
+var DEFAULT_FACE_PARAMS = {
+  name: 'New Face',
+  eyeCenterDistPercent:  { type:'number',  name:'Eye spacing',          current:22,  min:0,   max:50,  nIncrements:20 },
+  eyeYPercent:           { type:'number',  name:'Eye vertical position', current:40,  min:10,  max:70,  nIncrements:20 },
+  eyeOuterRadiusPercent: { type:'number',  name:'Eye size',              current:10,  min:2,   max:25,  nIncrements:20 },
+  eyeShapeRatio:         { type:'number',  name:'Eye shape (oval ratio)',current:1.5, min:0.5, max:3.0, nIncrements:25 },
+  eyeOutlineThickness:   { type:'number',  name:'Eye outline thickness', current:3,   min:0,   max:10,  nIncrements:10 },
+  eyeInnerRadiusPercent: { type:'number',  name:'Iris size (%)',         current:72,  min:10,  max:100, nIncrements:20 },
+  eyePupilRadiusPercent: { type:'number',  name:'Pupil size (%)',        current:55,  min:10,  max:100, nIncrements:20 },
+  eyelidOffset:          { type:'number',  name:'Eyelid height',         current:28,  min:0,   max:50,  nIncrements:25 },
+  mouthWPercent:         { type:'number',  name:'Mouth width',           current:5,   min:1,   max:20,  nIncrements:20 },
+  mouthYPercent:         { type:'number',  name:'Mouth position (Y)',    current:76,  min:50,  max:95,  nIncrements:20 },
+  mouthH:                { type:'number',  name:'Mouth curve',           current:14,  min:0,   max:50,  nIncrements:20 },
+  mouthStrokeWidth:      { type:'number',  name:'Mouth thickness',       current:7,   min:1,   max:20,  nIncrements:20 },
+  mouthSlope:            { type:'number',  name:'Mouth slope',           current:12,  min:0,   max:40,  nIncrements:20 },
+  avgBlinkTime:          { type:'number',  name:'Blink interval (ms)',   current:5000,min:500, max:15000,nIncrements:20 },
+  eyeOutlineColor:       { type:'color',   name:'Eye outline colour',    current:'#0d1a2e' },
+  eyeOuterColor:         { type:'color',   name:'Eye white colour',      current:'#cfe2ff' },
+  eyeInnerColor:         { type:'color',   name:'Iris colour',           current:'#0d2550' },
+  eyePupilColor:         { type:'color',   name:'Pupil colour',          current:'#3a6fcc' },
+  backgroundColor:       { type:'color',   name:'Background colour',     current:'#1a56a0' },
+  mouthColor:            { type:'color',   name:'Mouth colour',          current:'#cfe2ff' },
+  hasBlinking:           { type:'boolean', name:'Blinking',              current:1 },
+  hasEyelid:             { type:'boolean', name:'Eyelid',                current:1 },
+  hasReflection:         { type:'boolean', name:'Eye reflection',        current:1 },
+  hasMouth:              { type:'boolean', name:'Show mouth',            current:1 },
+  isHorizontal:          { type:'boolean', name:'Horizontal layout',     current:1 },
+};
+
 function createNewFace() {
-  // Copies default blank face for the user to start editing
   if (!currentUserData) return;
   var newFaceIndex = (currentUserData.faces || []).length;
-  var blankFace = JSON.parse(JSON.stringify(newParameters || Face.parameters));
-  blankFace.name = 'New Face';
-  firebase.database().ref('users/' + Database.uid + '/faces/' + newFaceIndex + '/').set(blankFace);
+  var base = newParameters
+    ? JSON.parse(JSON.stringify(newParameters))
+    : JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
+  base.name = 'New Face';
+  firebase.database().ref('users/' + Database.uid + '/faces/' + newFaceIndex + '/').set(base);
 }
 
 // globals needed by facedata.js stubs
