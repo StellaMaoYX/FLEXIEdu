@@ -242,25 +242,45 @@ function loadActivityIntoEditor(i) {
   document.getElementById('edSuccess').value = act.successPhrase || '';
   const lvl = (act.levels || {})[languageLevel] || { instruction: '', items: [] };
   document.getElementById('edInstruction').value = lvl.instruction || '';
-  renderEditorItems(lvl.items || []);
+  const isWord = languageLevel === 'word';
+  document.getElementById('wordInputArea').style.display = isWord ? 'block' : 'none';
+  document.getElementById('itemsArea').style.display     = isWord ? 'none'  : 'block';
+  if (isWord) {
+    const word = (lvl.items || []).map(it => it.text || '').join('');
+    document.getElementById('wordLetterInput').value = word;
+    previewWordLetters();
+  } else {
+    renderEditorItems(lvl.items || []);
+  }
   updateEditorLevelTabs();
 }
 
 function saveCurrentToQueue() {
   if (!activityQueue.length) return;
-  const rows  = document.querySelectorAll('#editorItems .editor-item');
-  const items = Array.from(rows).map(row => ({
-    text:  row.querySelector('.item-text-input').value.trim(),
-    image: row.querySelector('.item-img-input').value.trim() || null,
-  })).filter(item => item.text);
   const act = activityQueue[activeIndex];
   if (!act.levels) act.levels = { word: { instruction:'', items:[] }, phrase: { instruction:'', items:[] }, sentence: { instruction:'', items:[] }, paragraph: { instruction:'', items:[] } };
   act.title         = document.getElementById('edTitle').value.trim()   || 'Untitled';
   act.successPhrase = document.getElementById('edSuccess').value.trim() || '';
-  act.levels[languageLevel] = {
-    instruction: document.getElementById('edInstruction').value.trim() || '',
-    items,
-  };
+
+  if (languageLevel === 'word') {
+    const word = (document.getElementById('wordLetterInput').value || '').trim().toLowerCase();
+    const items = word.split('').map(ch => ({ text: ch, image: null }));
+    act.levels.word = {
+      instruction: document.getElementById('edInstruction').value.trim() || 'Spell the word!',
+      items,
+      targetWord: word,
+    };
+  } else {
+    const rows  = document.querySelectorAll('#editorItems .editor-item');
+    const items = Array.from(rows).map(row => ({
+      text:  row.querySelector('.item-text-input').value.trim(),
+      image: row.querySelector('.item-img-input').value.trim() || null,
+    })).filter(item => item.text);
+    act.levels[languageLevel] = {
+      instruction: document.getElementById('edInstruction').value.trim() || '',
+      items,
+    };
+  }
   renderQueue();
   saveQueueToStorage();
 }
@@ -390,6 +410,22 @@ function renderEditorItems(items) {
   container.innerHTML = '';
   items.forEach((item, i) => container.appendChild(buildRow(i, item.text, item.image || '')));
   refreshRowNumbers();
+}
+
+function previewWordLetters() {
+  const word = (document.getElementById('wordLetterInput').value || '').trim().toLowerCase();
+  const container = document.getElementById('wordLetterPreview');
+  if (!container) return;
+  container.innerHTML = '';
+  word.split('').forEach(ch => {
+    const tile = document.createElement('span');
+    tile.textContent = ch;
+    tile.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+      'width:36px;height:36px;border:2px solid #1a56a0;border-radius:8px;' +
+      'font-size:1.2rem;font-weight:bold;color:#1a56a0;background:#f0f5ff;';
+    container.appendChild(tile);
+  });
+  saveCurrentToQueue();
 }
 
 function refreshRowNumbers() {
@@ -537,11 +573,24 @@ function removeEditorItem(btn) {
 
 // ── Read Editor ────────────────────────────────────────────────────────────
 function readActivity() {
-  const rows  = document.querySelectorAll('#editorItems .editor-item');
-  const items = Array.from(rows).map(row => ({
-    text:  row.querySelector('.item-text-input').value.trim(),
-    image: row.querySelector('.item-img-input').value.trim() || null,
-  })).filter(item => item.text);
+  const act = activityQueue[activeIndex];
+  const lvl = act && act.levels && act.levels[languageLevel]
+    ? act.levels[languageLevel]
+    : { instruction: '', items: [], targetWord: null };
+
+  let items, targetWord;
+  if (languageLevel === 'word') {
+    const word = (document.getElementById('wordLetterInput').value || '').trim().toLowerCase();
+    items      = word.split('').map(ch => ({ text: ch, image: null }));
+    targetWord = word;
+  } else {
+    const rows = document.querySelectorAll('#editorItems .editor-item');
+    items = Array.from(rows).map(row => ({
+      text:  row.querySelector('.item-text-input').value.trim(),
+      image: row.querySelector('.item-img-input').value.trim() || null,
+    })).filter(item => item.text);
+    targetWord = null;
+  }
 
   return {
     title:         document.getElementById('edTitle').value.trim()       || 'Custom Activity',
@@ -549,6 +598,7 @@ function readActivity() {
     successPhrase: document.getElementById('edSuccess').value.trim()     || 'Great job!',
     languageLevel,
     items,
+    targetWord,
     timestamp: Date.now(),
   };
 }
@@ -660,10 +710,19 @@ function switchEditorLevel(level) {
   saveCurrentToQueue();
   languageLevel = level;
   const act = activityQueue[activeIndex];
+  const isWord = level === 'word';
+  document.getElementById('wordInputArea').style.display = isWord ? 'block' : 'none';
+  document.getElementById('itemsArea').style.display     = isWord ? 'none'  : 'block';
   if (act) {
     const lvl = (act.levels || {})[level] || { instruction: '', items: [] };
     document.getElementById('edInstruction').value = lvl.instruction || '';
-    renderEditorItems(lvl.items || []);
+    if (isWord) {
+      const word = (lvl.items || []).map(i => i.text || '').join('');
+      document.getElementById('wordLetterInput').value = word;
+      previewWordLetters();
+    } else {
+      renderEditorItems(lvl.items || []);
+    }
   }
   updateEditorLevelTabs();
 }

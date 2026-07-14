@@ -28,7 +28,7 @@ function initStudent() {
       const data = snapshot.val();
       if (!data || !data.items) return;
       const rawItems = Array.isArray(data.items) ? data.items : Object.values(data.items);
-      if (rawItems.length > 0) startActivity({ ...data, items: rawItems });
+      if (rawItems.length > 0) startActivity(Object.assign({}, data, { items: rawItems }));
     });
 
   firebase.database()
@@ -307,7 +307,14 @@ function updateCheckBtn() {
 // ── Answer Checking ────────────────────────────────────────────────────────
 function checkAnswer() {
   if (!currentActivity) return;
-  const isCorrect = slots.every((item, i) => item && item.origIdx === i);
+  let isCorrect;
+  if (currentActivity.languageLevel === 'word' && currentActivity.targetWord) {
+    // For word mode: compare assembled letters as a string (repeated letters are interchangeable)
+    const assembled = slots.map(s => s ? s.text : '').join('');
+    isCorrect = assembled === currentActivity.targetWord;
+  } else {
+    isCorrect = slots.every((item, i) => item && item.origIdx === i);
+  }
 
   try {
     firebase.database()

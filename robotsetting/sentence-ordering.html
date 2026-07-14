@@ -462,12 +462,28 @@
           <label class="field-label">Instruction (students see this)</label>
           <input class="field-input" type="text" id="edInstruction" placeholder="e.g. Put these steps in the correct order!">
 
-          <label class="field-label">
-            Items &mdash;
-            <span style="font-weight:normal;text-transform:none;letter-spacing:0;">enter in <strong>correct order</strong>; students will see them shuffled</span>
-          </label>
-          <div class="items-list" id="editorItems"></div>
-          <button class="add-item-btn" onclick="addEditorItem()">&#43; Add Item</button>
+          <!-- Word-level: single word input -->
+          <div id="wordInputArea" style="display:none;">
+            <label class="field-label">Word to spell</label>
+            <input class="field-input" type="text" id="wordLetterInput"
+                   placeholder="e.g. banana"
+                   oninput="previewWordLetters()"
+                   style="font-size:1.3rem;letter-spacing:2px;text-transform:lowercase;">
+            <div id="wordLetterPreview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:36px;"></div>
+            <p style="font-size:0.8rem;color:#888;margin:6px 0 0;">
+              Letters will be shuffled for students. Repeated letters (e.g. 3 × <em>a</em> in <em>banana</em>) are treated as identical — any arrangement is correct.
+            </p>
+          </div>
+
+          <!-- Phrase / Sentence / Paragraph: normal item list -->
+          <div id="itemsArea">
+            <label class="field-label">
+              Items &mdash;
+              <span style="font-weight:normal;text-transform:none;letter-spacing:0;">enter in <strong>correct order</strong>; students will see them shuffled</span>
+            </label>
+            <div class="items-list" id="editorItems"></div>
+            <button class="add-item-btn" onclick="addEditorItem()">&#43; Add Item</button>
+          </div>
 
           <label class="field-label">Success Phrase (robot says when correct)</label>
           <input class="field-input" type="text" id="edSuccess" placeholder="e.g. You got it right!">
