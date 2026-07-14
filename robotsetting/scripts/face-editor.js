@@ -2,21 +2,20 @@ var config = new Config();
 var db = new Database(config.config, null);
 var face = new Face();
 
-// Prevent database.js anonymous sign-in — require Google login
+// Override auth handler AFTER Database is created but BEFORE Firebase loads.
+// database.js registers this function as the firebase.auth().onAuthStateChanged
+// callback once Firebase finishes loading — so we never call firebase.* directly here.
 Database.handleAuthStateChange = function(user) {
-  if (user && !user.isAnonymous && Database.readyCallback) {
-    Database.readyCallback(user);
-  }
-};
-
-firebase.auth().onAuthStateChanged(function(user) {
   if (!user || user.isAnonymous) {
     window.location.href = '../index.html';
     return;
   }
+  Database.uid = user.uid;
+  Database.isAnonymous = false;
+  Database.userEmail = user.email;
   currentUid = user.uid;
   initializeEdit();
-});
+};
 
 var currentUid = null;
 
