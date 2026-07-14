@@ -14,81 +14,73 @@
 const CLOUDINARY_CLOUD_NAME = 'dcqqsp2kz';
 const CLOUDINARY_PRESET     = 'kolywy3s';
 
+// ── Language Levels ────────────────────────────────────────────────────────
+// Each activity carries exactly ONE of these tags -- the templates are
+// different enough (word = spell-a-word; the rest = order-these-items) that
+// mixing several into one activity doesn't make sense.
+const LEVEL_LABELS = { word: 'Word', phrase: 'Phrase', sentence: 'Sentence', paragraph: 'Paragraph' };
+const DEFAULT_INSTRUCTION = {
+  word:      'Spell the word!',
+  phrase:    'Put these phrases in order!',
+  sentence:  'Put these steps in the correct order!',
+  paragraph: 'Put these paragraphs in the correct order!',
+};
+
 // ── Preset Activities ──────────────────────────────────────────────────────
 const PRESETS = [
   {
     title: 'Life Cycle of a Butterfly',
     successPhrase: 'You got the butterfly life cycle right!',
-    currentLevel: 'sentence',
-    levels: {
-      word:     { instruction: 'Put these words in order!',    items: [] },
-      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
-      sentence: {
-        instruction: 'Put these steps in the correct order!',
-        items: [
-          { text: 'A butterfly lays eggs on a leaf.',        image: null },
-          { text: 'The eggs hatch into tiny caterpillars.',  image: null },
-          { text: 'The caterpillar forms a chrysalis.',      image: null },
-          { text: 'A butterfly emerges from the chrysalis!', image: null },
-        ],
-      },
-    },
+    level: 'sentence',
+    instruction: 'Put these steps in the correct order!',
+    items: [
+      { text: 'A butterfly lays eggs on a leaf.',        image: null },
+      { text: 'The eggs hatch into tiny caterpillars.',  image: null },
+      { text: 'The caterpillar forms a chrysalis.',      image: null },
+      { text: 'A butterfly emerges from the chrysalis!', image: null },
+    ],
+    targetWord: null,
   },
   {
     title: 'The Hungry Cat',
     successPhrase: 'The cat sat on the mat!',
-    currentLevel: 'word',
-    levels: {
-      word: {
-        instruction: 'Unscramble the sentence! Drag the words into the right order.',
-        items: [
-          { text: 'The', image: null },
-          { text: 'cat', image: null },
-          { text: 'sat', image: null },
-          { text: 'on',  image: null },
-          { text: 'the', image: null },
-          { text: 'mat', image: null },
-        ],
-      },
-      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
-      sentence: { instruction: 'Put these steps in the correct order!', items: [] },
-    },
+    level: 'phrase',
+    instruction: 'Unscramble the sentence! Drag the words into the right order.',
+    items: [
+      { text: 'The', image: null },
+      { text: 'cat', image: null },
+      { text: 'sat', image: null },
+      { text: 'on',  image: null },
+      { text: 'the', image: null },
+      { text: 'mat', image: null },
+    ],
+    targetWord: null,
   },
   {
     title: 'Desert Habitat',
     successPhrase: 'Fantastic! You know so much about desert habitats!',
-    currentLevel: 'sentence',
-    levels: {
-      word:     { instruction: 'Put these words in order!',   items: [] },
-      phrase:   { instruction: 'Put these phrases in order!', items: [] },
-      sentence: {
-        instruction: 'Order these habitat facts from smallest to biggest idea.',
-        items: [
-          { text: 'A cactus grows in the hot, dry desert.',             image: null },
-          { text: 'Lizards and snakes live near the cactus.',           image: null },
-          { text: 'Deserts get very little rain each year.',            image: null },
-          { text: 'Deserts can be found on every continent on Earth.',  image: null },
-        ],
-      },
-    },
+    level: 'sentence',
+    instruction: 'Order these habitat facts from smallest to biggest idea.',
+    items: [
+      { text: 'A cactus grows in the hot, dry desert.',             image: null },
+      { text: 'Lizards and snakes live near the cactus.',           image: null },
+      { text: 'Deserts get very little rain each year.',            image: null },
+      { text: 'Deserts can be found on every continent on Earth.',  image: null },
+    ],
+    targetWord: null,
   },
   {
     title: 'Ecosystem Food Chain',
     successPhrase: 'Amazing! You just built a food chain!',
-    currentLevel: 'sentence',
-    levels: {
-      word:     { instruction: 'Put these words in order!',   items: [] },
-      phrase:   { instruction: 'Put these phrases in order!', items: [] },
-      sentence: {
-        instruction: 'Put these living things in order from producer to top predator.',
-        items: [
-          { text: 'Grass gets energy from the sun.',           image: null },
-          { text: 'A grasshopper eats the grass.',             image: null },
-          { text: 'A frog catches and eats the grasshopper.',  image: null },
-          { text: 'A hawk swoops down and eats the frog.',     image: null },
-        ],
-      },
-    },
+    level: 'sentence',
+    instruction: 'Put these living things in order from producer to top predator.',
+    items: [
+      { text: 'Grass gets energy from the sun.',           image: null },
+      { text: 'A grasshopper eats the grass.',             image: null },
+      { text: 'A frog catches and eats the grasshopper.',  image: null },
+      { text: 'A hawk swoops down and eats the frog.',     image: null },
+    ],
+    targetWord: null,
   },
 ];
 
@@ -109,20 +101,37 @@ let dragSrcIndex   = null;
 
 function storageKey() { return `emar_queue_robot${currentRobotId}`; }
 
+// Every activity now carries exactly one { level, instruction, items,
+// targetWord } -- no more parallel per-level blobs. This flattens whatever
+// shape an activity was saved in (current flat format, the older
+// one-tag-remembered-but-still-nested format, or the original pre-levels
+// format) into that single shape.
 function migrateActivity(act) {
-  if (act.levels) {
-    if (!act.currentLevel) act.currentLevel = 'sentence';
+  if (act.level && !act.levels) {
+    if (!(act.level in LEVEL_LABELS)) act.level = 'sentence';
+    if (act.items === undefined) act.items = [];
+    if (act.targetWord === undefined) act.targetWord = null;
     return act;
+  }
+  if (act.levels) {
+    const level = (act.currentLevel && act.levels[act.currentLevel]) ? act.currentLevel : 'sentence';
+    const lvl   = act.levels[level] || { instruction: '', items: [] };
+    return {
+      title:         act.title         || 'Untitled',
+      successPhrase: act.successPhrase || '',
+      level,
+      instruction:   lvl.instruction || '',
+      items:         lvl.items       || [],
+      targetWord:    lvl.targetWord  || null,
+    };
   }
   return {
     title:         act.title         || 'Untitled',
     successPhrase: act.successPhrase || '',
-    currentLevel: 'sentence',
-    levels: {
-      word:     { instruction: '',                    items: [] },
-      phrase:   { instruction: '',                    items: [] },
-      sentence: { instruction: act.instruction || '', items: act.items || [] },
-    },
+    level:         'sentence',
+    instruction:   act.instruction || '',
+    items:         act.items       || [],
+    targetWord:    null,
   };
 }
 
@@ -201,6 +210,7 @@ function renderQueue() {
       <span class="queue-drag">&#8942;</span>
       <span class="queue-num">${i + 1}</span>
       <span class="queue-title">${esc(act.title || 'Untitled')}</span>
+      <span class="queue-level-badge">${esc(LEVEL_LABELS[act.level] || 'Sentence')}</span>
       <button class="queue-rm" title="Remove" onclick="event.stopPropagation();removeActivity(${i})">&#10005;</button>`;
     div.addEventListener('click', () => selectActivity(i));
     div.addEventListener('dragstart', e => {
@@ -246,20 +256,19 @@ function selectActivity(i) {
 function loadActivityIntoEditor(i) {
   const act = activityQueue[i];
   if (!act) return;
-  languageLevel = act.currentLevel || 'sentence';
-  document.getElementById('edTitle').value   = act.title         || '';
-  document.getElementById('edSuccess').value = act.successPhrase || '';
-  const lvl = (act.levels || {})[languageLevel] || { instruction: '', items: [] };
-  document.getElementById('edInstruction').value = lvl.instruction || '';
+  languageLevel = act.level || 'sentence';
+  document.getElementById('edTitle').value       = act.title         || '';
+  document.getElementById('edSuccess').value     = act.successPhrase || '';
+  document.getElementById('edInstruction').value = act.instruction   || '';
   const isWord = languageLevel === 'word';
   document.getElementById('wordInputArea').style.display = isWord ? 'block' : 'none';
   document.getElementById('itemsArea').style.display     = isWord ? 'none'  : 'block';
   if (isWord) {
-    const word = (lvl.items || []).map(it => it.text || '').join('');
+    const word = act.targetWord || (act.items || []).map(it => it.text || '').join('');
     document.getElementById('wordLetterInput').value = word;
     previewWordLetters();
   } else {
-    renderEditorItems(lvl.items || []);
+    renderEditorItems(act.items || []);
   }
   updateEditorLevelTabs();
 }
@@ -267,28 +276,23 @@ function loadActivityIntoEditor(i) {
 function saveCurrentToQueue() {
   if (!activityQueue.length) return;
   const act = activityQueue[activeIndex];
-  if (!act.levels) act.levels = { word: { instruction:'', items:[] }, phrase: { instruction:'', items:[] }, sentence: { instruction:'', items:[] }, paragraph: { instruction:'', items:[] } };
   act.title         = document.getElementById('edTitle').value.trim()   || 'Untitled';
   act.successPhrase = document.getElementById('edSuccess').value.trim() || '';
+  act.level          = languageLevel;
 
   if (languageLevel === 'word') {
     const word = (document.getElementById('wordLetterInput').value || '').trim().toLowerCase();
-    const items = word.split('').map(ch => ({ text: ch, image: null }));
-    act.levels.word = {
-      instruction: document.getElementById('edInstruction').value.trim() || 'Spell the word!',
-      items,
-      targetWord: word,
-    };
+    act.instruction = document.getElementById('edInstruction').value.trim() || DEFAULT_INSTRUCTION.word;
+    act.items       = word.split('').map(ch => ({ text: ch, image: null }));
+    act.targetWord  = word;
   } else {
     const rows  = document.querySelectorAll('#editorItems .editor-item');
-    const items = Array.from(rows).map(row => ({
+    act.instruction = document.getElementById('edInstruction').value.trim() || '';
+    act.items       = Array.from(rows).map(row => ({
       text:  row.querySelector('.item-text-input').value.trim(),
       image: row.querySelector('.item-img-input').value.trim() || null,
     })).filter(item => item.text);
-    act.levels[languageLevel] = {
-      instruction: document.getElementById('edInstruction').value.trim() || '',
-      items,
-    };
+    act.targetWord = null;
   }
   renderQueue();
   saveQueueToStorage();
@@ -299,13 +303,10 @@ function addActivity() {
   activityQueue.push({
     title: 'New Activity',
     successPhrase: 'Great job!',
-    currentLevel: 'sentence',
-    levels: {
-      word:     { instruction: 'Put these words in order!',    items: [] },
-      phrase:   { instruction: 'Put these phrases in order!',  items: [] },
-      sentence:  { instruction: 'Put these steps in the correct order!', items: [] },
-      paragraph: { instruction: 'Put these paragraphs in the correct order!', items: [] },
-    },
+    level: 'sentence',
+    instruction: DEFAULT_INSTRUCTION.sentence,
+    items: [],
+    targetWord: null,
   });
   activeIndex = activityQueue.length - 1;
   renderQueue();
@@ -583,11 +584,6 @@ function removeEditorItem(btn) {
 
 // ── Read Editor ────────────────────────────────────────────────────────────
 function readActivity() {
-  const act = activityQueue[activeIndex];
-  const lvl = act && act.levels && act.levels[languageLevel]
-    ? act.levels[languageLevel]
-    : { instruction: '', items: [], targetWord: null };
-
   let items, targetWord;
   if (languageLevel === 'word') {
     const word = (document.getElementById('wordLetterInput').value || '').trim().toLowerCase();
@@ -716,26 +712,51 @@ function sendCommand(type) {
 }
 
 // ── Language Level ─────────────────────────────────────────────────────────
+// An activity carries exactly one level/tag. Clicking a different tag
+// re-assigns the activity to it -- since the templates aren't compatible
+// (word = spell-a-word, the rest = order-these-items), whatever content was
+// there for the old tag can't carry over, so we reset to a fresh template
+// for the new one. Confirm first if there's real content to lose.
 function switchEditorLevel(level) {
-  saveCurrentToQueue();
-  languageLevel = level;
   const act = activityQueue[activeIndex];
+  if (!act) return;
+  if (level === act.level) { updateEditorLevelTabs(); return; }
+
+  // Sync any in-progress edits (title, instruction, items) into `act` first,
+  // both so the content check below sees the real current state, and so an
+  // unrelated edit (e.g. the title) isn't lost if the switch gets cancelled.
+  saveCurrentToQueue();
+
+  const hasContent = act.level === 'word'
+    ? !!(act.targetWord || (act.items && act.items.length))
+    : !!((act.instruction && act.instruction !== DEFAULT_INSTRUCTION[act.level]) || (act.items && act.items.length));
+
+  if (hasContent) {
+    const ok = confirm(
+      `Switching from "${LEVEL_LABELS[act.level]}" to "${LEVEL_LABELS[level]}" will clear this ` +
+      `activity's current content (each activity can only have one tag). Continue?`
+    );
+    if (!ok) return;
+  }
+
+  languageLevel    = level;
+  act.level        = level;
+  act.instruction  = DEFAULT_INSTRUCTION[level];
+  act.items        = [];
+  act.targetWord   = null;
+
   const isWord = level === 'word';
   document.getElementById('wordInputArea').style.display = isWord ? 'block' : 'none';
   document.getElementById('itemsArea').style.display     = isWord ? 'none'  : 'block';
-  if (act) {
-    act.currentLevel = level; // remember this activity's level tag, like selectActivity() expects
-    const lvl = (act.levels || {})[level] || { instruction: '', items: [] };
-    document.getElementById('edInstruction').value = lvl.instruction || '';
-    if (isWord) {
-      const word = (lvl.items || []).map(i => i.text || '').join('');
-      document.getElementById('wordLetterInput').value = word;
-      previewWordLetters();
-    } else {
-      renderEditorItems(lvl.items || []);
-    }
-    saveQueueToStorage();
+  document.getElementById('edInstruction').value = act.instruction;
+  if (isWord) {
+    document.getElementById('wordLetterInput').value = '';
+    previewWordLetters();
+  } else {
+    renderEditorItems([]);
   }
+  renderQueue();
+  saveQueueToStorage();
   updateEditorLevelTabs();
 }
 
