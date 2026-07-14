@@ -219,10 +219,15 @@ function newParameterValue(target, param) {
   Face.updateParameters(newParameters);
 }
 
-function faceRenamed() {
-  if (selectedUser !== currentUid || selectedFace === null) return;
+function saveFace() {
+  if (!currentUid || selectedFace === null || !newParameters) return;
   var name = document.getElementById('faceName').value;
-  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').update({ name: name });
+  newParameters.name = name;
+  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').set(newParameters)
+    .then(function() {
+      var btn = document.querySelector('button[onclick="saveFace()"]');
+      if (btn) { btn.textContent = '✅ Saved!'; setTimeout(function(){ btn.textContent = '💾 Save'; }, 1500); }
+    });
 }
 
 var DEFAULT_FACE_PARAMS = {
