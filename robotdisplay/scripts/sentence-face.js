@@ -22,63 +22,83 @@
 
   let currentFaceState = null;
 
+  // ── Shared eye geometry ────────────────────────────────────────────────────
+  const EYE_BASE = {
+    eyeCenterDistPercent:  22,
+    eyeYPercent:           40,
+    eyeOuterRadiusPercent: 10,
+    eyeShapeRatio:         1.5,
+    eyeOutlineThickness:   3,
+    eyeOutlineColor:       '#0d1a2e',
+    eyeInnerRadiusPercent: 72,   // iris ~7% screen width
+    eyePupilRadiusPercent: 55,   // pupil ~4% screen width
+    hasReflection:         1,
+    hasEyeLines:           0,
+    hasEyelid:             1,
+    avgLookaroundTime:     3000,
+    minLookaroundTime:     1500,
+  };
+
   // ── Face parameter presets ─────────────────────────────────────────────────
-  const PARAMS_WORKING = {
+  const PARAMS_WORKING = Object.assign({}, EYE_BASE, {
     isHorizontal:          1,
-    backgroundColor:       '#1a56a0',   // matches student page primary blue
-    eyeOuterRadiusPercent: 7,
+    backgroundColor:       '#1a56a0',
     eyeOuterColor:         '#cfe2ff',
-    eyeInnerColor:         '#000',
+    eyeInnerColor:         '#0d2550',
+    eyePupilColor:         '#3a6fcc',
+    eyelidOffset:          14,
     hasBlinking:           1,
     avgBlinkTime:          5000,
     hasMouth:              1,
     mouthWPercent:         12,
-    mouthYPercent:         80,
-    mouthH:                28,
+    mouthYPercent:         76,
+    mouthH:                18,
     mouthColor:            '#cfe2ff',
-    mouthStrokeWidth:      10,
-    mouthSlope:            22,
+    mouthStrokeWidth:      8,
+    mouthSlope:            16,
     hasNose:               0,
     hasText:               0,
-  };
+  });
 
-  const PARAMS_CORRECT = {
+  const PARAMS_CORRECT = Object.assign({}, EYE_BASE, {
     isHorizontal:          1,
-    backgroundColor:       '#146e3c',   // matches student page correct overlay
-    eyeOuterRadiusPercent: 7,
+    backgroundColor:       '#146e3c',
     eyeOuterColor:         '#b7f5d1',
-    eyeInnerColor:         '#000',
+    eyeInnerColor:         '#063d1e',
+    eyePupilColor:         '#2ecc71',
+    eyelidOffset:          20,          // wide open excited eyes
     hasBlinking:           1,
-    avgBlinkTime:          1200,        // rapid excited blinking
+    avgBlinkTime:          1200,
     hasMouth:              1,
     mouthWPercent:         15,
-    mouthYPercent:         80,
-    mouthH:                38,
-    mouthColor:            '#b7f5d1',
-    mouthStrokeWidth:      12,
-    mouthSlope:            24,
-    hasNose:               0,
-    hasText:               0,
-  };
-
-  const PARAMS_STUCK = {
-    isHorizontal:          1,
-    backgroundColor:       '#46465a',   // matches student page stuck overlay
-    eyeOuterRadiusPercent: 7,
-    eyeOuterColor:         '#c8c8d8',
-    eyeInnerColor:         '#000',
-    hasBlinking:           0,           // still, heavy eyes
-    avgBlinkTime:          99999,
-    hasMouth:              1,
-    mouthWPercent:         11,
-    mouthYPercent:         80,
+    mouthYPercent:         76,
     mouthH:                26,
-    mouthColor:            '#9090a8',
-    mouthStrokeWidth:      10,
+    mouthColor:            '#b7f5d1',
+    mouthStrokeWidth:      9,
     mouthSlope:            20,
     hasNose:               0,
     hasText:               0,
-  };
+  });
+
+  const PARAMS_STUCK = Object.assign({}, EYE_BASE, {
+    isHorizontal:          1,
+    backgroundColor:       '#46465a',
+    eyeOuterColor:         '#c8c8d8',
+    eyeInnerColor:         '#222233',
+    eyePupilColor:         '#6666aa',
+    eyelidOffset:          6,           // heavy droopy eyelids = sad
+    hasBlinking:           0,
+    avgBlinkTime:          99999,
+    hasMouth:              1,
+    mouthWPercent:         11,
+    mouthYPercent:         76,
+    mouthH:                18,
+    mouthColor:            '#9090a8',
+    mouthStrokeWidth:      8,
+    mouthSlope:            16,
+    hasNose:               0,
+    hasText:               0,
+  });
 
   // ── State transitions ──────────────────────────────────────────────────────
   function applyState(state) {
@@ -102,7 +122,7 @@
       Face.isMouthInverted  = true;
       Face.isMouthExtended  = true;
       Eyes.isLookingAround  = false;
-      Eyes.currentLookAt    = 'down';
+      Eyes.currentLookAt    = 'none';
       Face.draw();
       addTears();
       setLabel("Uh-oh… let's try again");
