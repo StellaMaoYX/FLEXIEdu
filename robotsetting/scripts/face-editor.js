@@ -118,6 +118,11 @@ function updateUserFaceList() {
     myFaceList.appendChild(wrapper);
   }
 
+  // Restore selected highlight
+  if (selectedFace !== null) {
+    var sel = myFaceList.querySelector('[data-index="' + selectedFace + '"]');
+    if (sel) sel.classList.add('selected');
+  }
 }
 
 function removeUserFace(index) {
@@ -268,7 +273,8 @@ function saveFace() {
   var name = document.getElementById('faceName').value;
   newParameters.name = name;
 
-  // Capture current preview SVG as thumbnail
+  // Capture thumbnail separately so it doesn't pollute the parameter object
+  var thumbSVG = '';
   var svgEl = document.getElementById('faceSVG');
   if (svgEl) {
     var w = svgEl.clientWidth, h = svgEl.clientHeight;
@@ -276,14 +282,15 @@ function saveFace() {
     clone.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
     clone.removeAttribute('width');
     clone.removeAttribute('height');
-    newParameters.thumbSVG = clone.outerHTML;
+    thumbSVG = clone.outerHTML;
   }
 
-  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').set(newParameters)
-    .then(function() {
-      var btn = document.querySelector('button[onclick="saveFace()"]');
-      if (btn) { btn.textContent = '✅ Saved!'; setTimeout(function(){ btn.textContent = '💾 Save'; }, 1500); }
-    });
+  var ref = firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/');
+  ref.set(newParameters).then(function() {
+    if (thumbSVG) ref.update({ thumbSVG: thumbSVG });
+    var btn = document.querySelector('button[onclick="saveFace()"]');
+    if (btn) { btn.textContent = '✅ Saved!'; setTimeout(function(){ btn.textContent = '💾 Save'; }, 1500); }
+  });
 }
 
 var DEFAULT_FACE_PARAMS = {
