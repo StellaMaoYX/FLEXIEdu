@@ -19,6 +19,7 @@ const PRESETS = [
   {
     title: 'Life Cycle of a Butterfly',
     successPhrase: 'You got the butterfly life cycle right!',
+    currentLevel: 'sentence',
     levels: {
       word:     { instruction: 'Put these words in order!',    items: [] },
       phrase:   { instruction: 'Put these phrases in order!',  items: [] },
@@ -36,6 +37,7 @@ const PRESETS = [
   {
     title: 'The Hungry Cat',
     successPhrase: 'The cat sat on the mat!',
+    currentLevel: 'word',
     levels: {
       word: {
         instruction: 'Unscramble the sentence! Drag the words into the right order.',
@@ -55,6 +57,7 @@ const PRESETS = [
   {
     title: 'Desert Habitat',
     successPhrase: 'Fantastic! You know so much about desert habitats!',
+    currentLevel: 'sentence',
     levels: {
       word:     { instruction: 'Put these words in order!',   items: [] },
       phrase:   { instruction: 'Put these phrases in order!', items: [] },
@@ -72,6 +75,7 @@ const PRESETS = [
   {
     title: 'Ecosystem Food Chain',
     successPhrase: 'Amazing! You just built a food chain!',
+    currentLevel: 'sentence',
     levels: {
       word:     { instruction: 'Put these words in order!',   items: [] },
       phrase:   { instruction: 'Put these phrases in order!', items: [] },
@@ -106,10 +110,14 @@ let dragSrcIndex   = null;
 function storageKey() { return `emar_queue_robot${currentRobotId}`; }
 
 function migrateActivity(act) {
-  if (act.levels) return act;
+  if (act.levels) {
+    if (!act.currentLevel) act.currentLevel = 'sentence';
+    return act;
+  }
   return {
     title:         act.title         || 'Untitled',
     successPhrase: act.successPhrase || '',
+    currentLevel: 'sentence',
     levels: {
       word:     { instruction: '',                    items: [] },
       phrase:   { instruction: '',                    items: [] },
@@ -238,6 +246,7 @@ function selectActivity(i) {
 function loadActivityIntoEditor(i) {
   const act = activityQueue[i];
   if (!act) return;
+  languageLevel = act.currentLevel || 'sentence';
   document.getElementById('edTitle').value   = act.title         || '';
   document.getElementById('edSuccess').value = act.successPhrase || '';
   const lvl = (act.levels || {})[languageLevel] || { instruction: '', items: [] };
@@ -290,6 +299,7 @@ function addActivity() {
   activityQueue.push({
     title: 'New Activity',
     successPhrase: 'Great job!',
+    currentLevel: 'sentence',
     levels: {
       word:     { instruction: 'Put these words in order!',    items: [] },
       phrase:   { instruction: 'Put these phrases in order!',  items: [] },
@@ -714,6 +724,7 @@ function switchEditorLevel(level) {
   document.getElementById('wordInputArea').style.display = isWord ? 'block' : 'none';
   document.getElementById('itemsArea').style.display     = isWord ? 'none'  : 'block';
   if (act) {
+    act.currentLevel = level; // remember this activity's level tag, like selectActivity() expects
     const lvl = (act.levels || {})[level] || { instruction: '', items: [] };
     document.getElementById('edInstruction').value = lvl.instruction || '';
     if (isWord) {
@@ -723,6 +734,7 @@ function switchEditorLevel(level) {
     } else {
       renderEditorItems(lvl.items || []);
     }
+    saveQueueToStorage();
   }
   updateEditorLevelTabs();
 }
