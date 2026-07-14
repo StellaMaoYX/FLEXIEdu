@@ -14,14 +14,17 @@ firebase.auth().onAuthStateChanged(function(user) {
     window.location.href = '../index.html';
     return;
   }
+  currentUid = user.uid;
   initializeEdit();
 });
+
+var currentUid = null;
 
 function initializeEdit() {
   window.onresize = Face.draw;
 
   // Load current user's faces only (rules allow reading own /users/{uid}/)
-  firebase.database().ref('/users/' + Database.uid + '/').on('value', function(snapshot) {
+  firebase.database().ref('/users/' + currentUid + '/').on('value', function(snapshot) {
     currentUserData = snapshot.val() || {};
     updateUserFaceList();
   });
@@ -51,10 +54,10 @@ function updateUserFaceList() {
     img.className = 'face-thumb';
     img.src = imgSrc;
     img.title = name;
-    img.dataset.user = Database.uid;
+    img.dataset.user = currentUid;
     img.dataset.index = i;
     img.onclick = (function(el, idx) {
-      return function() { selectedFaceChanged(el, Database.uid, idx); };
+      return function() { selectedFaceChanged(el, currentUid, idx); };
     })(img, i);
 
     var label = document.createElement('p');
@@ -80,7 +83,7 @@ function updateUserFaceList() {
 function removeUserFace(index) {
   var newFaces = (currentUserData.faces || []).slice();
   newFaces.splice(index, 1);
-  firebase.database().ref('/users/' + Database.uid + '/').update({ faces: newFaces });
+  firebase.database().ref('/users/' + currentUid + '/').update({ faces: newFaces });
 }
 
 function selectedFaceChanged(target, user, index) {
@@ -196,7 +199,7 @@ function createRangeInput(id, name, current, min, max, nIncrements) {
 }
 
 function newParameterValue(target, param) {
-  if (!Database.uid || selectedFace === null) return;
+  if (!currentUid || selectedFace === null) return;
   var key = target.name;
   var newParam = newParameters[key];
   if (!newParam) return;
@@ -215,15 +218,15 @@ function newParameterValue(target, param) {
 
   var updates = {};
   updates[key] = newParam;
-  firebase.database().ref('users/' + Database.uid + '/faces/' + selectedFace + '/').update(updates);
+  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').update(updates);
   hasNewParams = true;
   Face.updateParameters(newParameters);
 }
 
 function faceRenamed() {
-  if (selectedUser !== Database.uid || selectedFace === null) return;
+  if (selectedUser !== currentUid || selectedFace === null) return;
   var name = document.getElementById('faceName').value;
-  firebase.database().ref('users/' + Database.uid + '/faces/' + selectedFace + '/').update({ name: name });
+  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').update({ name: name });
 }
 
 var DEFAULT_FACE_PARAMS = {
@@ -262,7 +265,7 @@ function createNewFace() {
     ? JSON.parse(JSON.stringify(newParameters))
     : JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
   base.name = 'New Face';
-  firebase.database().ref('users/' + Database.uid + '/faces/' + newFaceIndex + '/').set(base);
+  firebase.database().ref('users/' + currentUid + '/faces/' + newFaceIndex + '/').set(base);
 }
 
 // globals needed by facedata.js stubs
