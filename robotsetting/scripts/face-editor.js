@@ -29,6 +29,23 @@ function initializeEdit() {
   });
 }
 
+// Strips id="..." from an SVG string's root element and all descendants.
+// Used both when saving a thumbnail (so we never write bad ids) and when
+// rendering one (so thumbnails saved before that fix -- which still carry a
+// duplicate id="faceSVG" -- can't hijack document.getElementById("faceSVG")
+// once inserted into the "My Faces" list, which sits before the real
+// preview in DOM order).
+function stripSvgIds(svgString) {
+  var tmp = document.createElement('div');
+  tmp.innerHTML = svgString;
+  var root = tmp.firstElementChild;
+  if (root) {
+    root.removeAttribute('id');
+    root.querySelectorAll('[id]').forEach(function(el) { el.removeAttribute('id'); });
+  }
+  return tmp.innerHTML;
+}
+
 function faceThumbSVG(p) {
   var W = 108, H = 72;
   var get = function(key, def) {
@@ -97,7 +114,7 @@ function updateUserFaceList() {
     var thumb = document.createElement('div');
     thumb.className = 'face-thumb';
     thumb.title = name;
-    thumb.innerHTML = faceData.thumbSVG || faceThumbSVG(faceData);
+    thumb.innerHTML = faceData.thumbSVG ? stripSvgIds(faceData.thumbSVG) : faceThumbSVG(faceData);
     thumb.dataset.index = i;
     thumb.onclick = (function(el, idx) {
       return function() { selectedFaceChanged(el, currentUid, idx); };
