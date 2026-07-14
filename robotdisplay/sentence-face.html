@@ -11,15 +11,26 @@
       background: #111;
       width: 100vw;
       height: 100vh;
+      height: 100dvh; /* mobile Chrome: shrinks to the visible area even when the address bar won't auto-hide */
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    /* Face is 16:9 landscape; Face.draw() sets the height via JS */
+    /* This page always renders the face at a fixed 16:9 (isHorizontal:1 in
+       every state, see sentence-face.js). Driving the box's size from
+       aspect-ratio + height lets it shrink by WIDTH on short landscape-phone
+       viewports (where height is the binding constraint) instead of
+       overflowing -- Face.draw() then reads back a clientWidth that's
+       already correctly constrained, so its own faceWidth*0.5625 height
+       calculation just reaffirms the same box, with no letterbox bars. */
     #robotFace {
-      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      width: auto;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
     }
     #faceSVG {
       width: 100%;
