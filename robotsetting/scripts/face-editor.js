@@ -301,6 +301,13 @@ function saveFace() {
     clone.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
     clone.removeAttribute('width');
     clone.removeAttribute('height');
+    // The live preview's aspect ratio (e.g. 16:9 for a horizontal face)
+    // rarely matches the fixed 108x72 (3:2) thumbnail slot it's displayed
+    // in later. Without this, the SVG's default preserveAspectRatio
+    // ("meet") letterboxes the content to fit, leaving a visible white gap
+    // above/below it. "slice" instead scales to fill the slot completely,
+    // cropping any excess -- fine for a small preview icon.
+    clone.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     // Strip every id (root + descendants, e.g. "faceSVG", "mouth", "OuterLeft"...)
     // so this saved snapshot can never collide with the live preview's ids once
     // it's inserted into the "My Faces" thumbnail list -- a duplicate "faceSVG"
