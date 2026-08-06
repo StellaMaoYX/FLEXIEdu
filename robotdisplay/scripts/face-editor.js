@@ -1,30 +1,14 @@
 var config = new Config();
-var db = new Database(config.config, null);
+var currentRobot = Number(Config.getURLParameter('robot') || 0);
 var face = new Face();
-
-// Override auth handler AFTER Database is created but BEFORE Firebase loads.
-// database.js registers this function as the firebase.auth().onAuthStateChanged
-// callback once Firebase finishes loading — so we never call firebase.* directly here.
-Database.handleAuthStateChange = function(user) {
-  if (!user || user.isAnonymous) {
-    window.location.href = '../index.html';
-    return;
-  }
-  Database.uid = user.uid;
-  Database.isAnonymous = false;
-  Database.userEmail = user.email;
-  currentUid = user.uid;
-  initializeEdit();
-};
-
-var currentUid = null;
+var db = new Database(config.config, initializeEdit);
 
 function initializeEdit() {
   window.onresize = Face.draw;
 
-  // Load current user's faces only (rules allow reading own /users/{uid}/)
-  firebase.database().ref('/users/' + currentUid + '/').on('value', function(snapshot) {
-    currentUserData = snapshot.val() || {};
+  // Load this robot's faces (same anonymous-write path sentence-student.js uses under /robots/)
+  firebase.database().ref('/robots/' + currentRobot + '/faces/').on('value', function(snapshot) {
+    currentUserData = { faces: snapshot.val() || {} };
     updateUserFaceList();
   });
 }
@@ -117,7 +101,7 @@ function updateUserFaceList() {
     thumb.innerHTML = faceData.thumbSVG ? stripSvgIds(faceData.thumbSVG) : faceThumbSVG(faceData);
     thumb.dataset.index = i;
     thumb.onclick = (function(el, idx) {
-      return function() { selectedFaceChanged(el, currentUid, idx); };
+      return function() { selectedFaceChanged(el, idx); };
     })(thumb, i);
 
     var label = document.createElement('p');
@@ -145,12 +129,12 @@ function updateUserFaceList() {
 function removeUserFace(index) {
   var newFaces = (currentUserData.faces || []).slice();
   newFaces.splice(index, 1);
-  firebase.database().ref('/users/' + currentUid + '/').update({ faces: newFaces });
+  firebase.database().ref('/robots/' + currentRobot + '/').update({ faces: newFaces })
+    .catch(function(err) { alert('Could not delete: ' + err.message); });
 }
 
-function selectedFaceChanged(target, user, index) {
+function selectedFaceChanged(target, index) {
   hasNewParams = true;
-  selectedUser = user;
   selectedFace = index;
 
   document.querySelectorAll('.face-thumb').forEach(function(img) {
@@ -263,7 +247,7 @@ function createRangeInput(id, name, current, min, max, nIncrements) {
 }
 
 function newParameterValue(target, param) {
-  if (!currentUid || selectedFace === null) return;
+  if (selectedFace === null) return;
   var key = target.name;
   var newParam = newParameters[key];
   if (!newParam) return;
@@ -282,13 +266,14 @@ function newParameterValue(target, param) {
 
   var updates = {};
   updates[key] = newParam;
-  firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/').update(updates);
+  firebase.database().ref('robots/' + currentRobot + '/faces/' + selectedFace + '/').update(updates)
+    .catch(function(err) { alert('Could not save: ' + err.message); });
   hasNewParams = true;
   Face.updateParameters(newParameters);
 }
 
 function saveFace() {
-  if (!currentUid || selectedFace === null || !newParameters) return;
+  if (selectedFace === null || !newParameters) return;
   var name = document.getElementById('faceName').value;
   newParameters.name = name;
 
@@ -318,12 +303,12 @@ function saveFace() {
     thumbSVG = clone.outerHTML;
   }
 
-  var ref = firebase.database().ref('users/' + currentUid + '/faces/' + selectedFace + '/');
+  var ref = firebase.database().ref('robots/' + currentRobot + '/faces/' + selectedFace + '/');
   ref.set(newParameters).then(function() {
     if (thumbSVG) ref.update({ thumbSVG: thumbSVG });
     var btn = document.querySelector('button[onclick="saveFace()"]');
     if (btn) { btn.textContent = '✅ Saved!'; setTimeout(function(){ btn.textContent = '💾 Save'; }, 1500); }
-  });
+  }).catch(function(err) { alert('Could not save: ' + err.message); });
 }
 
 var DEFAULT_FACE_PARAMS = {
@@ -357,33 +342,23 @@ var DEFAULT_FACE_PARAMS = {
 };
 
 function createNewFace() {
-  if (!currentUid) return;
   var newFaceIndex = (currentUserData && currentUserData.faces) ? Object.keys(currentUserData.faces).length : 0;
   var base = JSON.parse(JSON.stringify(DEFAULT_FACE_PARAMS));
   base.name = 'New Face';
-  firebase.database().ref('users/' + currentUid + '/faces/' + newFaceIndex + '/').set(base)
+  firebase.database().ref('robots/' + currentRobot + '/faces/' + newFaceIndex + '/').set(base)
     .then(function() {
       // Auto-select the new face so preview shows immediately
       selectedFace = String(newFaceIndex);
-      selectedUser = currentUid;
       newParameters = base;
       Face.isMouthExtended = true;
       Eyes.isLookingAround = true;
       Face.updateParameters(base);
       updateFaceEditor();
       document.getElementById('faceName').value = 'New Face';
-    });
+    }).catch(function(err) { alert('Could not create face: ' + err.message); });
 }
 
-// globals needed by facedata.js stubs
 var newParameters = null;
-var allUserData = null;
 var currentUserData = null;
-var selectedUser = null;
 var selectedFace = null;
 var hasNewParams = false;
-var isSetup = false;
-
-// Stubs so facedata.js functions don't crash if called
-function updateAllUsersFaceList() {}
-function updateRobotFaceList() {}

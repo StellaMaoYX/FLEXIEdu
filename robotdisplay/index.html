@@ -166,6 +166,11 @@
       color: #166534;
     }
 
+    .badge-edit {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
     .card-header-block h2 {
       font-size: 1.6rem;
       font-weight: 700;
@@ -219,6 +224,16 @@
 
     .btn-activity:hover {
       background: #16a34a;
+      color: #fff;
+    }
+
+    .btn-edit {
+      background: #8b5cf6;
+      color: #fff;
+    }
+
+    .btn-edit:hover {
+      background: #7c3aed;
       color: #fff;
     }
 
@@ -310,6 +325,18 @@
         <div class="card-body-block">
           <p>Display the robot face for the sentence ordering activity. Reacts to student results in real time.</p>
           <button class="btn-launch btn-activity" onclick="startPageWithRobot('sentence-face')">Start Robot Face</button>
+        </div>
+      </div>
+
+      <!-- Face Editing -->
+      <div class="flexi-card">
+        <div class="card-header-block">
+          <div class="badge-tag badge-edit">Editing</div>
+          <h2>Face Editing</h2>
+        </div>
+        <div class="card-body-block">
+          <p>Select a robot above and press the button to customize your robot's face or create new faces.</p>
+          <button class="btn-launch btn-edit" type="button" onclick="startPageWithRobot('face-editor')" id="editButton">Start Face Editor</button>
         </div>
       </div>
 
