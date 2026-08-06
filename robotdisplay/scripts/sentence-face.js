@@ -21,6 +21,7 @@
   const STATE_STUCK   = 'stuck';
 
   let currentFaceState = null;
+  let customFaceParams = null; // editor-shaped {key:{type,current,...}} pushed from face-editor.html, layered onto PARAMS_WORKING
 
   // ── Shared eye geometry ────────────────────────────────────────────────────
   const EYE_BASE = {
@@ -128,14 +129,24 @@
       setLabel("Uh-oh… let's try again");
 
     } else {
-      // working (default)
-      Object.assign(Face.parameters, PARAMS_WORKING);
-      Face.isMouthInverted  = false;
-      Face.isMouthExtended  = true;
-      Eyes.isLookingAround  = true;
-      Face.draw();
-      setLabel('Thinking… 🤔');
+      renderWorking();
     }
+  }
+
+  // Renders the working look: base preset, then any custom face pushed from
+  // face-editor.html layered on top. Split out from applyState so a live
+  // push can re-render immediately without fighting its "same state, skip" guard.
+  function renderWorking() {
+    Object.assign(Face.parameters, PARAMS_WORKING);
+    Face.isMouthInverted  = false;
+    Face.isMouthExtended  = true;
+    Eyes.isLookingAround  = true;
+    if (customFaceParams) {
+      Face.updateParameters(customFaceParams); // overrides pushed keys + redraws
+    } else {
+      Face.draw();
+    }
+    setLabel('Thinking… 🤔');
   }
 
   function setLabel(text) {
@@ -262,6 +273,13 @@
       const data = snap.val();
       if (!data || !data.timestamp || data.timestamp < initTime) return;
       if (data.status === 'answering') applyState(STATE_WORKING);
+    });
+
+    // Face pushed live from face-editor.html → re-render immediately if
+    // currently showing (or about to show) the working look
+    db.ref(`/robots/${robotId}/flexi/customFace`).on('value', snap => {
+      customFaceParams = snap.val() || null;
+      if (currentFaceState === STATE_WORKING || currentFaceState === null) renderWorking();
     });
   }
 
