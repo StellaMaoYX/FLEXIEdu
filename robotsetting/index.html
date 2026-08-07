@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Teacher Dashboard – FLEXI Educational Platform</title>
+  <title>My Materials – FLEXI Educational Platform</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
@@ -34,6 +34,8 @@
       border-bottom: 1px solid #e0e0e0;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
+
+    .topbar-links { display: flex; gap: 10px; }
 
     .btn-home {
       display: inline-flex;
@@ -66,23 +68,9 @@
       margin: 0 auto;
     }
 
-    /* Hero */
-    .hero {
-      margin-bottom: 12px;
-    }
-
-    .hero h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 8px;
-    }
-
-    .hero p {
-      font-size: 1.35rem;
-      color: #6b7280;
-      margin: 0;
-    }
+    .hero { margin-bottom: 12px; }
+    .hero h1 { font-size: 3rem; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+    .hero p { font-size: 1.35rem; color: #6b7280; margin: 0; }
 
     /* Robot selector bar */
     .selector-bar {
@@ -93,18 +81,11 @@
       border: 1px solid #e0e6ed;
       border-radius: 12px;
       padding: 14px 20px;
-      margin: 24px 0 36px;
+      margin: 24px 0 28px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
 
-    .selector-bar label {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #374151;
-      margin: 0;
-      white-space: nowrap;
-    }
-
+    .selector-bar label { font-size: 1rem; font-weight: 600; color: #374151; margin: 0; white-space: nowrap; }
     .selector-bar .btn-group .btn {
       font-size: 1rem;
       border-radius: 8px;
@@ -113,142 +94,191 @@
       color: #111827;
       padding: 8px 18px;
     }
+    .selector-bar .btn-group .btn:hover { background: #f0f4f8; }
 
-    .selector-bar .btn-group .btn:hover {
-      background: #f0f4f8;
-    }
-
-    /* Cards grid — 3 columns */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-    }
-
-    .flexi-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
-      border: 1px solid #e8ecf0;
+    /* Toolbar: breadcrumb + New button */
+    .toolbar {
       display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    .flexi-card:hover {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      transform: translateY(-2px);
-    }
-
-    .card-header-block {
-      padding: 24px 24px 18px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .badge-tag {
-      display: inline-block;
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      border-radius: 20px;
-      padding: 4px 12px;
-      margin-bottom: 12px;
-    }
-
-    .badge-control  { background: #fef3c7; color: #b45309; }
-    .badge-edit     { background: #ede9fe; color: #6d28d9; }
-    .badge-activity { background: #dcfce7; color: #166534; }
-    .badge-admin    { background: #fee2e2; color: #991b1b; }
-
-    .card-header-block h2 {
-      font-size: 1.45rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-    }
-
-    .card-body-block {
-      padding: 20px 24px 24px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-body-block p {
-      color: #4b5563;
-      font-size: 1rem;
-      line-height: 1.65;
-      flex: 1;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    /* Buttons */
-    .btn-launch {
-      display: block;
-      width: 100%;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: background 0.15s, opacity 0.15s;
+    .breadcrumb { font-size: 1.15rem; }
+    .crumb { cursor: pointer; color: #1a56a0; }
+    .crumb:hover { text-decoration: underline; }
+    .crumb.current { color: #111827; font-weight: 700; cursor: default; text-decoration: none; }
+    .crumb-sep { margin: 0 8px; color: #9ca3af; }
+
+    .new-btn-wrap { position: relative; }
+    .btn-new {
+      background: #1a56a0;
       color: #fff;
-      margin-bottom: 8px;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 22px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
     }
+    .btn-new:hover { background: #154583; }
 
-    .btn-launch:last-child { margin-bottom: 0; }
-
-    .btn-control  { background: #f59e0b; }
-    .btn-control:hover  { background: #d97706; }
-
-    .btn-edit     { background: #8b5cf6; }
-    .btn-edit:hover     { background: #7c3aed; }
-
-    .btn-activity { background: #22c55e; }
-    .btn-activity:hover { background: #16a34a; }
-
-    .btn-admin    { background: #ef4444; }
-    .btn-admin:hover    { background: #dc2626; }
-
-    /* Google sign-in area */
-    .google-signin-area {
-      margin-bottom: 12px;
+    .new-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+      min-width: 210px;
+      overflow: hidden;
+      z-index: 20;
     }
-
-    .btn-google {
+    .new-menu-dropdown.open { display: block; }
+    .new-menu-dropdown button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
       background: none;
       border: none;
-      padding: 0;
+      text-align: left;
+      font-size: 0.95rem;
       cursor: pointer;
     }
+    .new-menu-dropdown button:hover { background: #f1f5f9; }
 
-    .img-button {
-      height: 40px;
+    /* Library grid */
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
     }
 
-    #googleSignInInfo {
-      font-size: 0.9rem;
-      color: #374151;
-      margin-bottom: 8px;
+    .lib-tile {
+      position: relative;
+      background: #fff;
+      border: 1px solid #e8ecf0;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: box-shadow 0.15s, transform 0.15s;
     }
+    .lib-tile:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
-    .footer {
-      padding: 20px 0 0;
+    .lib-tile-body { padding: 26px 12px 16px; text-align: center; cursor: pointer; user-select: none; }
+    .lib-tile-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .lib-tile-name { font-size: 0.92rem; font-weight: 600; color: #1f2937; overflow-wrap: break-word; }
+
+    .lib-tile-menu-wrap { position: absolute; top: 6px; right: 6px; }
+    .lib-tile-menu-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      line-height: 1;
       color: #9ca3af;
-      font-size: 0.82rem;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+    .lib-tile-menu-btn:hover { background: #f1f5f9; color: #374151; }
+
+    .lib-tile-menu-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 30px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+      min-width: 130px;
+      overflow: hidden;
+      z-index: 10;
+    }
+    .lib-tile-menu-dropdown.open { display: block; }
+    .lib-tile-menu-dropdown button {
+      display: block;
+      width: 100%;
+      padding: 9px 14px;
+      background: none;
+      border: none;
+      text-align: left;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .lib-tile-menu-dropdown button:hover { background: #f1f5f9; }
+    .lib-tile-menu-dropdown button.danger { color: #dc2626; }
+
+    /* Empty state */
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 90px 20px;
+      color: #9ca3af;
       text-align: center;
+      gap: 6px;
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 8px; }
+
+    /* Material type modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-card h3 { margin: 0 0 16px; font-size: 1.3rem; color: #111827; }
+    .material-type-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    .material-type-option:hover { border-color: #1a56a0; background: #f5f8ff; }
+    .material-type-icon { font-size: 1.8rem; }
+    .material-type-label { display: block; font-weight: 700; color: #111827; }
+    .material-type-desc { display: block; font-size: 0.82rem; color: #6b7280; margin-top: 2px; }
+    .modal-close {
+      margin-top: 6px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
     }
 
-    @media (max-width: 900px) {
-      .cards-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    .footer { padding: 30px 0 0; color: #9ca3af; font-size: 0.82rem; text-align: center; }
 
     @media (max-width: 600px) {
-      .cards-grid { grid-template-columns: 1fr; }
       .hero h1 { font-size: 2rem; }
       .page-wrapper { padding: 32px 20px 28px; }
     }
@@ -257,13 +287,15 @@
 <body>
   <div class="topbar">
     <a class="btn-home" href="../index.html">&#8592; Home</a>
-    <div id="topLeft"></div>
+    <div class="topbar-links">
+      <a class="btn-home" href="tools.html">&#128736; Tools</a>
+    </div>
   </div>
 
   <div class="page-wrapper">
     <div class="hero">
-      <h1>Teacher Dashboard</h1>
-      <p>Control, configure, and manage your classroom robot</p>
+      <h1>My Materials</h1>
+      <p>Create and organize your lesson materials</p>
     </div>
 
     <!-- Robot selector -->
@@ -280,61 +312,36 @@
       </div>
     </div>
 
-    <!-- 3-column grid -->
-    <div class="cards-grid">
-
-      <!-- Robot Control (WoZ) -->
-      <div class="flexi-card">
-        <div class="card-header-block">
-          <div class="badge-tag badge-control">Control</div>
-          <h2>Robot Control (WoZ)</h2>
-        </div>
-        <div class="card-body-block">
-          <p>Select a robot above and press the button to start controlling the robot's actions (Wizard of Oz) from your browser.</p>
-          <button class="btn-launch btn-control" onclick="startController()" id="controlButton">Start Robot Controller</button>
+    <!-- Breadcrumb + New -->
+    <div class="toolbar">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="new-btn-wrap" id="newMenuWrap">
+        <button class="btn-new" onclick="toggleNewMenu()">&#43; New</button>
+        <div class="new-menu-dropdown" id="newMenuDropdown">
+          <button onclick="createFolder()">&#128193; New Folder</button>
+          <button onclick="openMaterialTypePicker()">&#128196; New Material</button>
         </div>
       </div>
+    </div>
 
-      <!-- Belly Editor -->
-      <div class="flexi-card">
-        <div class="card-header-block">
-          <div class="badge-tag badge-edit">Editing</div>
-          <h2>Belly Editor</h2>
-        </div>
-        <div class="card-body-block">
-          <p>Press button to start the belly editor to customize your belly screen or create new screens.</p>
-          <button class="btn-launch btn-edit" type="button" onclick="startBellyEditor()">Start Belly Editor</button>
-        </div>
-      </div>
+    <div class="library-grid" id="libraryGrid"></div>
 
-      <!-- Robot Setup -->
-      <div class="flexi-card">
-        <div class="card-header-block">
-          <div class="badge-tag badge-control">Control</div>
-          <h2>Robot Setup</h2>
-        </div>
-        <div class="card-body-block">
-          <p>Select a robot above and press the button to set up its face and other parameters, before starting to control it.</p>
-          <button class="btn-launch btn-control" onclick="startSetup()" id="setupButton">Start Robot Setup</button>
-        </div>
-      </div>
-
-      <!-- Sentence Ordering Activity -->
-      <div class="flexi-card">
-        <div class="card-header-block">
-          <div class="badge-tag badge-activity">Activity</div>
-          <h2>Sentence Ordering Activity</h2>
-        </div>
-        <div class="card-body-block">
-          <p>Launch the sentence ordering activity: drag-and-drop sentence sequencing, vocabulary audio, robot feedback, and teacher controls.</p>
-          <button class="btn-launch btn-activity" onclick="startFlexi()" id="flexiButton">Start Sentence Ordering Activity</button>
-        </div>
-      </div>
-
-
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🗂️</div>
+      <div>No materials yet.</div>
+      <div>Click "+ New" to create a folder or your first lesson material.</div>
     </div>
 
     <div class="footer">&copy; FLEXI Educational Platform</div>
+  </div>
+
+  <!-- New Material type picker -->
+  <div class="modal-overlay" id="materialTypeModal">
+    <div class="modal-card">
+      <h3>Choose activity type</h3>
+      <div id="materialTypeList"></div>
+      <button class="modal-close" onclick="closeMaterialTypeModal()">Cancel</button>
+    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -342,6 +349,6 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <script src="scripts/config.js"></script>
   <script src="../databasejs/scripts/database.js"></script>
-  <script src="scripts/index.js"></script>
+  <script src="scripts/library.js"></script>
 </body>
 </html>

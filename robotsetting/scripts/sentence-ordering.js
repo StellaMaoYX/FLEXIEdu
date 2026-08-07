@@ -86,6 +86,8 @@ const PRESETS = [
 
 // ── State ──────────────────────────────────────────────────────────────────
 let currentRobotId  = null;
+let currentUid       = null;
+let materialId       = new URLSearchParams(window.location.search).get('material');
 let robot           = null;
 let robotConnected  = false;
 // let resources    = [];  // Teacher Materials (disabled)
@@ -157,6 +159,33 @@ function loadQueueFromStorage() {
     loadActivityIntoEditor(activeIndex);
   }
 
+  // A material opened from "My Materials" is the source of truth — the
+  // per-robot teacherQueue below is just a same-page-refresh cache for the
+  // older robot-only flow.
+  if (materialId && currentUid) {
+    firebase.database()
+      .ref(`/users/${currentUid}/library/${materialId}`)
+      .once('value',
+        snapshot => {
+          const data = snapshot.val();
+          if (data) setMaterialName(data.name);
+          if (data && data.queue && data.queue.length > 0) {
+            activityQueue = data.queue.map(migrateActivity);
+            activeIndex   = data.activeIndex || 0;
+          } else {
+            _loadFromLocalStorage();
+          }
+          applyAndRender();
+        },
+        error => {
+          console.warn('Library material load failed:', error);
+          _loadFromLocalStorage();
+          applyAndRender();
+        }
+      );
+    return;
+  }
+
   try {
     firebase.database()
       .ref(`/robots/${currentRobotId}/flexi/teacherQueue`)
@@ -183,6 +212,11 @@ function loadQueueFromStorage() {
   }
 }
 
+function setMaterialName(name) {
+  const el = document.getElementById('topbarTitle');
+  if (el && name) el.textContent = '⚙ ' + name;
+}
+
 function saveQueueToStorage() {
   const data = { queue: activityQueue, activeIndex };
   // Save to localStorage (instant local backup)
@@ -196,6 +230,15 @@ function saveQueueToStorage() {
       .set(data)
       .catch(e => console.warn('Firebase queue save failed:', e));
   } catch (e) {}
+  // Keep the library material itself in sync so it reflects the latest edits
+  if (materialId && currentUid) {
+    try {
+      firebase.database()
+        .ref(`/users/${currentUid}/library/${materialId}`)
+        .update({ queue: activityQueue, activeIndex, updatedAt: Date.now() })
+        .catch(e => console.warn('Library material save failed:', e));
+    } catch (e) {}
+  }
 }
 
 function renderQueue() {
@@ -872,10 +915,35 @@ function updateResultBox(isCorrect, successPhrase) {
 // }
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
+// Require Google login, same as the other teacher tools — this page is only
+// ever linked to from "My Materials" / Robot Tools, both of which are
+// already login-gated.
+Database.handleAuthStateChange = function(user) {
+  if (user && !user.isAnonymous && Database.readyCallback) {
+    Database.readyCallback(user);
+  }
+};
+
+function waitForAuth() {
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user || user.isAnonymous) {
+        window.location.href = '../index.html';
+        return;
+      }
+      currentUid = user.uid;
+      initFlexi();
+    });
+  } else {
+    setTimeout(waitForAuth, 200);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof Config !== 'undefined' && typeof Database !== 'undefined') {
     try {
-      new Database(new Config().config, initFlexi);
+      new Database(new Config().config, null);
+      waitForAuth();
     } catch (e) {
       console.warn('Firebase init failed — running standalone:', e);
       initFlexi();
