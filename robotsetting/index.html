@@ -319,7 +319,7 @@
         <button class="btn-new" onclick="toggleNewMenu()">&#43; New</button>
         <div class="new-menu-dropdown" id="newMenuDropdown">
           <button onclick="createFolder()">&#128193; New Folder</button>
-          <button onclick="openMaterialTypePicker()">&#128196; New Material</button>
+          <button onclick="createClass()">&#127979; New Class</button>
         </div>
       </div>
     </div>
@@ -328,20 +328,11 @@
 
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">🗂️</div>
-      <div>No materials yet.</div>
-      <div>Click "+ New" to create a folder or your first lesson material.</div>
+      <div>No classes yet.</div>
+      <div>Click "+ New" to create a folder or your first class.</div>
     </div>
 
     <div class="footer">&copy; FLEXI Educational Platform</div>
-  </div>
-
-  <!-- New Material type picker -->
-  <div class="modal-overlay" id="materialTypeModal">
-    <div class="modal-card">
-      <h3>Choose activity type</h3>
-      <div id="materialTypeList"></div>
-      <button class="modal-close" onclick="closeMaterialTypeModal()">Cancel</button>
-    </div>
   </div>
 
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

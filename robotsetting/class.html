@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sentence Ordering Activity – Teacher</title>
+  <title>Class – Teacher</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
     * { box-sizing: border-box; }
@@ -89,31 +89,7 @@
     }
     .field-input:focus { border-color: #1a56a0; outline: none; }
 
-    /* ── Activity selector ── */
-    .preset-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-    .preset-select {
-      flex: 1;
-      padding: 7px 10px;
-      border: 2px solid #dde;
-      border-radius: 8px;
-      font-size: 0.92rem;
-    }
-    .preset-load-btn {
-      padding: 7px 14px;
-      background: #1a56a0;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.92rem;
-      cursor: pointer;
-    }
-    .preset-load-btn:hover { background: #154583; }
-
-    /* ── Editor items ── */
+    /* ── Editor items (shared by ordering items / sorting categories & items / mc options) ── */
     .items-list { margin-bottom: 10px; }
     .editor-item {
       display: flex;
@@ -168,6 +144,22 @@
       font-family: inherit;
     }
     .item-img-input:focus { border-color: #1a56a0; outline: none; }
+    .item-cat-select {
+      width: 100%;
+      padding: 6px 9px;
+      border: 2px solid #dde;
+      border-radius: 7px;
+      font-size: 0.86rem;
+      font-family: inherit;
+      background: white;
+    }
+    .item-correct-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: #555;
+    }
     .item-remove {
       border: none;
       background: none;
@@ -281,7 +273,7 @@
     }
     .ctrl-btn:hover { background: #f0f4ff; border-color: #1a56a0; }
 
-    /* ── Language level ── */
+    /* ── Language level (ordering only) ── */
     .level-btns { display: flex; gap: 6px; }
     .level-btn {
       flex: 1;
@@ -298,43 +290,16 @@
     }
     .level-btn.active { background: #1a56a0; color: white; }
 
-    /* ── Materials upload ── */
-    .upload-zone {
-      border: 2px dashed #9dbcf5;
-      border-radius: 9px;
-      padding: 12px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 0.88rem;
-      color: #666;
-      margin-bottom: 7px;
-      transition: all 0.12s;
-    }
-    .upload-zone:hover { border-color: #1a56a0; background: #f0f4ff; }
-    .link-row { display: flex; gap: 6px; margin-bottom: 6px; }
-    .link-input {
-      flex: 1; padding: 6px 8px;
-      border: 2px solid #ddd; border-radius: 7px;
-      font-size: 0.85rem;
-    }
-    .link-add { padding: 6px 11px; background: #1a56a0; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.85rem; }
-    .resource-list { list-style: none; padding: 0; margin: 0; }
-    .resource-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 4px 0; border-bottom: 1px solid #eee; font-size: 0.82rem;
-    }
-    .resource-item a { color: #1a56a0; text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .resource-rm { border: none; background: none; color: #e74c3c; cursor: pointer; margin-left: 5px; }
-
     /* ── Section divider ── */
     .section-title {
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: #999;
-      margin: 0 0 7px;
+      margin: 14px 0 7px;
       font-weight: bold;
     }
+    .section-title:first-child { margin-top: 0; }
 
     /* ── Hint note ── */
     .hint-note {
@@ -344,7 +309,7 @@
       margin-top: 4px;
     }
 
-    /* ── Activity Queue ── */
+    /* ── Task list (was Activity Queue) ── */
     .queue-item {
       display: flex;
       align-items: center;
@@ -385,6 +350,7 @@
       border: 1px solid #c3d7f7;
       border-radius: 20px;
       padding: 2px 8px;
+      white-space: nowrap;
     }
     .queue-rm {
       border: none;
@@ -428,14 +394,79 @@
     .save-queue-btn:hover { background: #d68910; }
     .save-status { text-align: center; font-size: 0.8rem; color: #888; min-height: 16px; margin-top: 4px; }
     .save-status.ok { color: #1a7a4a; font-weight: bold; }
+    .empty-tasks-hint { text-align: center; color: #999; font-size: 0.85rem; padding: 14px 4px; }
+
+    /* ── Task type picker modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-card h3 { margin: 0 0 16px; font-size: 1.3rem; color: #111827; }
+    .material-type-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    .material-type-option:hover { border-color: #1a56a0; background: #f5f8ff; }
+    .material-type-icon { font-size: 1.8rem; }
+    .material-type-label { display: block; font-weight: 700; color: #111827; }
+    .material-type-desc { display: block; font-size: 0.82rem; color: #6b7280; margin-top: 2px; }
+    .modal-close {
+      margin-top: 6px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* ── Toggle (single/multi choice) ── */
+    .toggle-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .toggle-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: 2px solid #1a56a0;
+      border-radius: 8px;
+      background: white;
+      color: #1a56a0;
+      font-size: 0.86rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+    }
+    .toggle-btn.active { background: #1a56a0; color: white; }
   </style>
 </head>
 <body>
 
   <!-- Top bar -->
   <div class="topbar">
-    <a href="index.html">&#8592; My Materials</a>
-    <span class="topbar-center" id="topbarTitle">&#9881; Sentence Ordering – Teacher Interface</span>
+    <a href="index.html">&#8592; My Classes</a>
+    <span class="topbar-center" id="topbarTitle">&#127979; Class – Teacher Interface</span>
     <span id="robotBadge" style="font-size:0.85rem;padding:4px 10px;background:rgba(255,255,255,0.15);border-radius:12px;">&#9888; No robot</span>
   </div>
 
@@ -444,57 +475,96 @@
     <!-- ═══ LEFT: Content Editor ═══════════════════════════════════════════ -->
     <div>
 
-      <!-- Activity queue -->
+      <!-- Task list -->
       <div class="card" style="margin-bottom:16px;">
-        <div class="card-head">&#128203; Activity Queue</div>
+        <div class="card-head">&#128203; Tasks in this Class</div>
         <div class="card-body">
-          <div id="queueList"></div>
-          <button class="add-queue-btn" onclick="addActivity()">&#43; Add Activity</button>
-          <button class="save-queue-btn" onclick="saveQueue()">&#128190; Save Queue</button>
+          <div id="taskList"></div>
+          <div class="empty-tasks-hint" id="emptyTasksHint" style="display:none;">No tasks yet — click "+ Add Task" to create one.</div>
+          <button class="add-queue-btn" onclick="openTaskTypePicker()">&#43; Add Task</button>
+          <button class="save-queue-btn" onclick="saveTasks()">&#128190; Save Class</button>
           <div class="save-status" id="saveStatus"></div>
-          <p class="hint-note" style="margin-top:6px;">Click an activity to edit it. Saved to this browser — stays after refresh.</p>
+          <p class="hint-note" style="margin-top:6px;">Click a task to edit it. Saved to this browser — stays after refresh.</p>
         </div>
       </div>
 
-      <!-- Activity content editor -->
-      <div class="card">
-        <div class="card-head">&#9999; Activity Content Editor</div>
-        <div class="card-body">
+      <!-- Task content editor -->
+      <div class="card" id="editorCard">
+        <div class="card-head">&#9999; Task Content Editor</div>
+        <div class="card-body" id="editorCardBody">
 
-          <label class="field-label">Activity Title</label>
+          <label class="field-label">Task Title</label>
           <input class="field-input" type="text" id="edTitle" placeholder="e.g. Life Cycle of a Butterfly">
-
-          <div class="level-btns" style="margin-bottom:12px;" id="editorLevelTabs">
-            <button class="level-btn" data-level="word"      onclick="switchEditorLevel('word')">Word</button>
-            <button class="level-btn" data-level="phrase"    onclick="switchEditorLevel('phrase')">Phrase</button>
-            <button class="level-btn active" data-level="sentence"   onclick="switchEditorLevel('sentence')">Sentence</button>
-            <button class="level-btn" data-level="paragraph" onclick="switchEditorLevel('paragraph')">Paragraph</button>
-          </div>
 
           <label class="field-label">Instruction (students see this)</label>
           <input class="field-input" type="text" id="edInstruction" placeholder="e.g. Put these steps in the correct order!">
 
-          <!-- Word-level: single word input -->
-          <div id="wordInputArea" style="display:none;">
-            <label class="field-label">Word to spell</label>
-            <input class="field-input" type="text" id="wordLetterInput"
-                   placeholder="e.g. banana"
-                   oninput="previewWordLetters()"
-                   style="font-size:1.3rem;letter-spacing:2px;text-transform:lowercase;">
-            <div id="wordLetterPreview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:36px;"></div>
-            <p style="font-size:0.8rem;color:#888;margin:6px 0 0;">
-              Letters will be shuffled for students. Repeated letters (e.g. 3 × <em>a</em> in <em>banana</em>) are treated as identical — any arrangement is correct.
-            </p>
+          <!-- ═══ Ordering body ═══ -->
+          <div id="orderingBody" style="display:none;">
+            <div class="level-btns" style="margin-bottom:12px;" id="editorLevelTabs">
+              <button class="level-btn" data-level="word"      onclick="switchEditorLevel('word')">Word</button>
+              <button class="level-btn" data-level="phrase"    onclick="switchEditorLevel('phrase')">Phrase</button>
+              <button class="level-btn active" data-level="sentence"   onclick="switchEditorLevel('sentence')">Sentence</button>
+              <button class="level-btn" data-level="paragraph" onclick="switchEditorLevel('paragraph')">Paragraph</button>
+            </div>
+
+            <!-- Word-level: single word input -->
+            <div id="wordInputArea" style="display:none;">
+              <label class="field-label">Word to spell</label>
+              <input class="field-input" type="text" id="wordLetterInput"
+                     placeholder="e.g. banana"
+                     oninput="previewWordLetters()"
+                     style="font-size:1.3rem;letter-spacing:2px;text-transform:lowercase;">
+              <div id="wordLetterPreview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:36px;"></div>
+              <p style="font-size:0.8rem;color:#888;margin:6px 0 0;">
+                Letters will be shuffled for students. Repeated letters (e.g. 3 × <em>a</em> in <em>banana</em>) are treated as identical — any arrangement is correct.
+              </p>
+            </div>
+
+            <!-- Phrase / Sentence / Paragraph: normal item list -->
+            <div id="itemsArea">
+              <label class="field-label">
+                Items &mdash;
+                <span style="font-weight:normal;text-transform:none;letter-spacing:0;">enter in <strong>correct order</strong>; students will see them shuffled. Use text, an image, or both.</span>
+              </label>
+              <div class="items-list" id="editorItems"></div>
+              <button class="add-item-btn" onclick="addEditorItem()">&#43; Add Item</button>
+            </div>
           </div>
 
-          <!-- Phrase / Sentence / Paragraph: normal item list -->
-          <div id="itemsArea">
-            <label class="field-label">
-              Items &mdash;
-              <span style="font-weight:normal;text-transform:none;letter-spacing:0;">enter in <strong>correct order</strong>; students will see them shuffled</span>
-            </label>
-            <div class="items-list" id="editorItems"></div>
-            <button class="add-item-btn" onclick="addEditorItem()">&#43; Add Item</button>
+          <!-- ═══ Sorting body ═══ -->
+          <div id="sortingBody" style="display:none;">
+            <label class="field-label">Categories &mdash; <span style="font-weight:normal;text-transform:none;letter-spacing:0;">the bins students sort items into</span></label>
+            <div class="items-list" id="sortingCategories"></div>
+            <button class="add-item-btn" onclick="addSortingCategory()">&#43; Add Category</button>
+
+            <label class="field-label">Items &mdash; <span style="font-weight:normal;text-transform:none;letter-spacing:0;">pick each item's correct category</span></label>
+            <div class="items-list" id="sortingItems"></div>
+            <button class="add-item-btn" onclick="addSortingItem()">&#43; Add Item</button>
+          </div>
+
+          <!-- ═══ Multiple Choice body ═══ -->
+          <div id="mcBody" style="display:none;">
+            <label class="field-label">Question</label>
+            <input class="field-input" type="text" id="mcQuestionText" placeholder="e.g. Which word means 'happy'?">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;">
+              <input class="item-img-input" type="url" id="mcQuestionImgUrl" placeholder="Question image URL (optional — or upload ▶)" style="flex:1;">
+              <label style="cursor:pointer;white-space:nowrap;padding:6px 10px;background:#1a56a0;color:white;border-radius:7px;font-size:0.8rem;flex-shrink:0;" title="Upload image from computer">
+                &#128228; Upload
+                <input type="file" accept="image/*" style="display:none" onchange="uploadMcQuestionImage(this)">
+              </label>
+            </div>
+            <div class="item-img-preview" id="mcQuestionImgPreview" style="display:none;margin:-6px 0 12px;"></div>
+
+            <label class="field-label">Answer Mode</label>
+            <div class="toggle-row">
+              <button class="toggle-btn active" id="mcSingleBtn" onclick="setMcMultiSelect(false)">Single Choice</button>
+              <button class="toggle-btn" id="mcMultiBtn" onclick="setMcMultiSelect(true)">Multiple Choice</button>
+            </div>
+
+            <label class="field-label">Options &mdash; <span style="font-weight:normal;text-transform:none;letter-spacing:0;">check the correct answer(s)</span></label>
+            <div class="items-list" id="mcOptions"></div>
+            <button class="add-item-btn" onclick="addMcOption()">&#43; Add Option</button>
           </div>
 
           <label class="field-label">Success Phrase (robot says when correct)</label>
@@ -504,6 +574,9 @@
           <button class="push-btn" onclick="pushToStudent()">&#9654; Push to Student Screen</button>
           <div class="push-status" id="pushStatus"></div>
           <p class="hint-note">&#8505; This immediately updates what students see on their screen.</p>
+        </div>
+        <div class="card-body" id="editorEmptyState" style="display:none;text-align:center;color:#999;">
+          Add a task on the left to start editing.
         </div>
       </div>
     </div>
@@ -544,40 +617,24 @@
       <div class="card">
         <div class="card-head">&#128100; Teacher Controls</div>
         <div class="card-body">
-          <p class="section-title">Activity</p>
+          <p class="section-title">Current Task</p>
           <button class="ctrl-btn" onclick="sendCommand('reset')">&#9851; Reset Student Screen</button>
-          <button class="ctrl-btn" onclick="skipToNext()">&#9197; Skip to Next</button>
+          <button class="ctrl-btn" onclick="skipToNext()">&#9197; Skip to Next Task</button>
           <button class="ctrl-btn" onclick="sendCommand('repeat')">&#128257; Repeat Instructions</button>
-
-          <p class="section-title" style="margin-top:10px;">Language Level</p>
-          <div class="level-btns">
-            <button class="level-btn" data-level="word"      onclick="setLevel('word')">Word</button>
-            <button class="level-btn" data-level="phrase"    onclick="setLevel('phrase')">Phrase</button>
-            <button class="level-btn active" data-level="sentence"   onclick="setLevel('sentence')">Sentence</button>
-            <button class="level-btn" data-level="paragraph" onclick="setLevel('paragraph')">Paragraph</button>
-          </div>
         </div>
       </div>
-
-      <!-- Teacher materials (disabled)
-      <div class="card">
-        <div class="card-head">&#128193; Teacher Materials</div>
-        <div class="card-body">
-          <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-            &#128196; Upload PDF or Image
-            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif" multiple style="display:none" onchange="handleUpload(event)">
-          </div>
-          <div class="link-row">
-            <input class="link-input" type="url" id="linkInput" placeholder="Paste a link…">
-            <button class="link-add" onclick="addLink()">Add</button>
-          </div>
-          <ul class="resource-list" id="resourceList"></ul>
-        </div>
-      </div>
-      -->
 
     </div><!-- /right-col -->
   </div><!-- /main-grid -->
+
+  <!-- Task type picker -->
+  <div class="modal-overlay" id="taskTypeModal">
+    <div class="modal-card">
+      <h3>Choose task type</h3>
+      <div id="taskTypeList"></div>
+      <button class="modal-close" onclick="closeTaskTypeModal()">Cancel</button>
+    </div>
+  </div>
 
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -585,6 +642,6 @@
   <script src="../robotdisplay/scripts/config.js"></script>
   <script src="../databasejs/scripts/database.js"></script>
   <script src="../robotapijs/scripts/robotapi.js"></script>
-  <script src="scripts/sentence-ordering.js"></script>
+  <script src="scripts/class.js"></script>
 </body>
 </html>

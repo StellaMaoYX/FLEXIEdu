@@ -1,20 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * FLEXI Student Interface — drag-from-bank-to-slot design
- * Upper area: numbered answer slots (horizontal)
- * Lower area: shuffled word-bank bubbles
+ * FLEXI Student Interface
+ * Renders whatever task type was last pushed to this robot's
+ * /robots/{id}/flexi/pushed — 'ordering' (drag-from-bank-to-slot),
+ * 'sorting' (drag-from-bank-to-bin), or 'multiple-choice' (tap options).
+ * Missing/legacy activityType is treated as 'ordering' for backward
+ * compatibility with anything pushed before task types existed.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-// ── State ──────────────────────────────────────────────────────────────────
-let currentActivity  = null;
-let slots            = [];   // array of N: null or item object
-let bank             = [];   // unplaced items
-let languageLevel    = 'sentence';
-let currentRobotId   = null;
+// ── Shared state ─────────────────────────────────────────────────────────
+let currentActivity   = null;
+let currentRobotId    = null;
 let feedbackIsCorrect = false;
-let lastCommandTs    = 0;
+let lastCommandTs     = 0;
 
-// drag state
+// Ordering state
+let slots = [];   // array of N: null or item object
+let bank  = [];   // unplaced items
 let dragSrc = null;  // { from: 'slot'|'bank', index: number }
+
+// Sorting state
+let sortBinItems     = {};   // categoryId -> [item,...]
+let sortBankItems    = [];   // unplaced items
+let selectedBankItem = null; // index into sortBankItems, for tap-to-place
+let sortDragSrc      = null; // { from:'bank', index } | { from:'bin', catId, index }
+
+// Multiple choice state
+let mcSelected = []; // selected option indices
 
 const STUCK_PHRASE = "Uh-oh, I'm stuck. Let's try that again!";
 
@@ -26,9 +37,21 @@ function initStudent() {
     .ref(`/robots/${currentRobotId}/flexi/pushed`)
     .on('value', snapshot => {
       const data = snapshot.val();
-      if (!data || !data.items) return;
-      const rawItems = Array.isArray(data.items) ? data.items : Object.values(data.items);
-      if (rawItems.length > 0) startActivity(Object.assign({}, data, { items: rawItems }));
+      if (!data) return;
+      const type = data.activityType || 'ordering';
+
+      if (type === 'multiple-choice') {
+        if (!data.options || !data.options.length) return;
+        startMultipleChoice(data);
+      } else if (type === 'sorting') {
+        const rawItems = Array.isArray(data.items) ? data.items : Object.values(data.items || {});
+        if (rawItems.length === 0) return;
+        startSorting(Object.assign({}, data, { items: rawItems }));
+      } else {
+        if (!data.items) return;
+        const rawItems = Array.isArray(data.items) ? data.items : Object.values(data.items);
+        if (rawItems.length > 0) startOrdering(Object.assign({}, data, { items: rawItems }));
+      }
     });
 
   firebase.database()
@@ -39,38 +62,6 @@ function initStudent() {
       lastCommandTs = data.timestamp;
       handleCommand(data.type);
     });
-
-  firebase.database()
-    .ref(`/robots/${currentRobotId}/flexi/languageLevel`)
-    .on('value', snapshot => {
-      const level = snapshot.val();
-      if (level) {
-        languageLevel = level;
-        document.getElementById('levelBadge').textContent =
-          level.charAt(0).toUpperCase() + level.slice(1);
-        if (currentActivity) render();
-      }
-    });
-}
-
-// ── Start / Reset Activity ─────────────────────────────────────────────────
-function startActivity(data) {
-  currentActivity = data;
-  languageLevel   = data.languageLevel || 'sentence';
-
-  const items = data.items.map((item, i) => ({ ...item, origIdx: i }));
-  slots = new Array(items.length).fill(null);
-  bank  = shuffle([...items]);
-
-  document.getElementById('waitingScreen').style.display  = 'none';
-  document.getElementById('activityScreen').style.display = 'block';
-  document.getElementById('activityTitle').textContent       = data.title;
-  document.getElementById('activityInstruction').textContent = data.instruction;
-  document.getElementById('levelBadge').textContent =
-    languageLevel.charAt(0).toUpperCase() + languageLevel.slice(1);
-
-  hideFeedback();
-  render();
 }
 
 function shuffle(arr) {
@@ -81,23 +72,57 @@ function shuffle(arr) {
   return arr;
 }
 
+function showScreen(activityType) {
+  document.getElementById('waitingScreen').style.display  = 'none';
+  document.getElementById('activityScreen').style.display = 'block';
+  document.getElementById('orderingScreen').style.display = activityType === 'ordering'        ? 'block' : 'none';
+  document.getElementById('sortingScreen').style.display  = activityType === 'sorting'          ? 'block' : 'none';
+  document.getElementById('mcScreen').style.display        = activityType === 'multiple-choice' ? 'block' : 'none';
+}
+
 // ── Teacher Commands ───────────────────────────────────────────────────────
 function handleCommand(type) {
   if (!currentActivity) return;
+  const actType = currentActivity.activityType || 'ordering';
   if (type === 'reset' || type === 'tryAgain') {
-    const items = currentActivity.items.map((item, i) => ({ ...item, origIdx: i }));
-    slots = new Array(items.length).fill(null);
-    bank  = shuffle([...items]);
-    hideFeedback();
-    render();
+    if      (actType === 'sorting')          resetSorting();
+    else if (actType === 'multiple-choice')  resetMultipleChoice();
+    else                                      resetOrdering();
     if (type === 'tryAgain') speakText(STUCK_PHRASE);
   } else if (type === 'repeat') {
     speakText(currentActivity.instruction);
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
-function render() {
+// ═══════════════════════════════════════════════════════════════════════════
+// Ordering — drag-from-bank-to-slot (unchanged behavior, just namespaced)
+// ═══════════════════════════════════════════════════════════════════════════
+function startOrdering(data) {
+  currentActivity = data;
+
+  const items = data.items.map((item, i) => ({ ...item, origIdx: i }));
+  slots = new Array(items.length).fill(null);
+  bank  = shuffle([...items]);
+
+  showScreen('ordering');
+  document.getElementById('activityTitle').textContent       = data.title;
+  document.getElementById('activityInstruction').textContent = data.instruction;
+  document.getElementById('levelBadge').textContent =
+    (data.languageLevel || 'sentence').charAt(0).toUpperCase() + (data.languageLevel || 'sentence').slice(1);
+
+  hideFeedback();
+  renderOrdering();
+}
+
+function resetOrdering() {
+  const items = currentActivity.items.map((item, i) => ({ ...item, origIdx: i }));
+  slots = new Array(items.length).fill(null);
+  bank  = shuffle([...items]);
+  hideFeedback();
+  renderOrdering();
+}
+
+function renderOrdering() {
   renderSlots();
   renderBank();
   updateCheckBtn();
@@ -184,7 +209,6 @@ function renderSlots() {
   container.addEventListener('drop', e => {
     e.preventDefault();
     container.classList.remove('drag-over-zone');
-    // Drop on zone background → place in first empty slot
     const firstEmpty = slots.indexOf(null);
     if (firstEmpty !== -1) dropOnSlot(firstEmpty);
   });
@@ -231,7 +255,7 @@ function renderBank() {
       const firstEmpty = slots.indexOf(null);
       if (firstEmpty !== -1) {
         slots[firstEmpty] = bank.splice(i, 1)[0];
-        render();
+        renderOrdering();
       }
     });
 
@@ -262,7 +286,7 @@ function renderBank() {
         bank.push(item);
         slots[dragSrc.index] = null;
         dragSrc = null;
-        render();
+        renderOrdering();
       }
     } else {
       dragSrc = null;
@@ -270,46 +294,344 @@ function renderBank() {
   });
 }
 
-// ── Drag Drop Helpers ──────────────────────────────────────────────────────
 function dropOnSlot(targetSlotIdx) {
   if (!dragSrc) return;
 
   if (dragSrc.from === 'bank') {
     const item = bank.splice(dragSrc.index, 1)[0];
-    // If slot already has something, push it back to bank
     if (slots[targetSlotIdx]) bank.push(slots[targetSlotIdx]);
     slots[targetSlotIdx] = item;
 
   } else if (dragSrc.from === 'slot') {
     const srcIdx = dragSrc.index;
     if (srcIdx === targetSlotIdx) { dragSrc = null; return; }
-    // Swap the two slots
     [slots[srcIdx], slots[targetSlotIdx]] = [slots[targetSlotIdx], slots[srcIdx]];
   }
 
   dragSrc = null;
-  render();
+  renderOrdering();
 }
 
 function returnSlotToBank(i) {
   if (!slots[i]) return;
   bank.push(slots[i]);
   slots[i] = null;
-  render();
+  renderOrdering();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Sorting — drag/tap items from a bank into category bins
+// ═══════════════════════════════════════════════════════════════════════════
+function startSorting(data) {
+  currentActivity = data;
+  sortBinItems     = {};
+  (data.categories || []).forEach(c => { sortBinItems[c.id] = []; });
+  sortBankItems    = shuffle((data.items || []).map((item, i) => ({ ...item, origIdx: i })));
+  selectedBankItem = null;
+
+  showScreen('sorting');
+  document.getElementById('activityTitle').textContent       = data.title;
+  document.getElementById('activityInstruction').textContent = data.instruction;
+  document.getElementById('levelBadge').textContent = 'Sorting';
+
+  hideFeedback();
+  renderSorting();
+}
+
+function resetSorting() {
+  sortBinItems = {};
+  (currentActivity.categories || []).forEach(c => { sortBinItems[c.id] = []; });
+  sortBankItems    = shuffle((currentActivity.items || []).map((item, i) => ({ ...item, origIdx: i })));
+  selectedBankItem = null;
+  hideFeedback();
+  renderSorting();
+}
+
+function renderSorting() {
+  renderSortBins();
+  renderSortBank();
+  updateCheckBtn();
+}
+
+function renderSortBins() {
+  const container = document.getElementById('sortBins');
+  container.innerHTML = '';
+
+  (currentActivity.categories || []).forEach(cat => {
+    const bin = document.createElement('div');
+    bin.className = 'sort-bin';
+    bin.dataset.catId = cat.id;
+
+    const label = document.createElement('div');
+    label.className = 'sort-bin-label';
+    if (cat.image) {
+      const img = document.createElement('img');
+      img.src = cat.image;
+      img.alt = cat.text || '';
+      label.appendChild(img);
+    }
+    if (cat.text) {
+      const span = document.createElement('span');
+      span.textContent = cat.text;
+      label.appendChild(span);
+    }
+    bin.appendChild(label);
+
+    const itemsWrap = document.createElement('div');
+    itemsWrap.className = 'sort-bin-items';
+    (sortBinItems[cat.id] || []).forEach((item, i) => itemsWrap.appendChild(buildSortChip(item, cat.id, i)));
+    bin.appendChild(itemsWrap);
+
+    bin.addEventListener('click', () => {
+      if (selectedBankItem !== null) placeInBin(selectedBankItem, cat.id);
+    });
+    bin.addEventListener('dragover', e => { e.preventDefault(); bin.classList.add('drag-over'); });
+    bin.addEventListener('dragleave', () => bin.classList.remove('drag-over'));
+    bin.addEventListener('drop', e => {
+      e.preventDefault();
+      bin.classList.remove('drag-over');
+      if (sortDragSrc && sortDragSrc.from === 'bank') placeInBin(sortDragSrc.index, cat.id);
+      else if (sortDragSrc && sortDragSrc.from === 'bin') moveWithinBins(sortDragSrc, cat.id);
+      sortDragSrc = null;
+    });
+
+    container.appendChild(bin);
+  });
+}
+
+function buildSortChip(item, catId, idxInBin) {
+  const chip = document.createElement('div');
+  chip.className = 'sort-chip';
+  if (item.image) {
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.text || '';
+    chip.appendChild(img);
+  }
+  if (item.text) {
+    const span = document.createElement('span');
+    span.textContent = item.text;
+    chip.appendChild(span);
+  }
+  chip.setAttribute('draggable', 'true');
+  chip.addEventListener('click', e => { e.stopPropagation(); returnBinItemToBank(catId, idxInBin); });
+  chip.addEventListener('dragstart', e => {
+    sortDragSrc = { from: 'bin', catId, index: idxInBin };
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  return chip;
+}
+
+function placeInBin(bankIdx, catId) {
+  const item = sortBankItems.splice(bankIdx, 1)[0];
+  if (!item) return;
+  if (!sortBinItems[catId]) sortBinItems[catId] = [];
+  sortBinItems[catId].push(item);
+  selectedBankItem = null;
+  renderSorting();
+}
+
+function returnBinItemToBank(catId, idx) {
+  const item = sortBinItems[catId].splice(idx, 1)[0];
+  if (item) sortBankItems.push(item);
+  renderSorting();
+}
+
+function moveWithinBins(src, targetCatId) {
+  if (src.catId === targetCatId) return;
+  const item = sortBinItems[src.catId].splice(src.index, 1)[0];
+  if (!item) return;
+  if (!sortBinItems[targetCatId]) sortBinItems[targetCatId] = [];
+  sortBinItems[targetCatId].push(item);
+  renderSorting();
+}
+
+function renderSortBank() {
+  const container = document.getElementById('sortBank');
+  container.innerHTML = '';
+
+  if (sortBankItems.length === 0) {
+    const hint = document.createElement('div');
+    hint.className   = 'bank-empty-hint';
+    hint.textContent = 'All placed!';
+    container.appendChild(hint);
+  }
+
+  sortBankItems.forEach((item, i) => {
+    const bubble = document.createElement('div');
+    bubble.className = 'bank-bubble' + (selectedBankItem === i ? ' selected' : '');
+
+    if (item.image) {
+      const img = document.createElement('img');
+      img.className = 'bubble-img';
+      img.src = item.image;
+      img.alt = item.text || '';
+      bubble.appendChild(img);
+    }
+    if (item.text) {
+      const text = document.createElement('span');
+      text.textContent = item.text;
+      bubble.appendChild(text);
+    }
+
+    const speakBtn = document.createElement('button');
+    speakBtn.className   = 'bubble-speak';
+    speakBtn.textContent = '🔊';
+    speakBtn.title = 'Listen';
+    speakBtn.onclick = e => { e.stopPropagation(); speakText(item.text || ''); };
+    bubble.appendChild(speakBtn);
+
+    bubble.addEventListener('click', e => {
+      if (e.target.closest('.bubble-speak')) return;
+      selectedBankItem = (selectedBankItem === i) ? null : i;
+      renderSortBank();
+    });
+
+    bubble.setAttribute('draggable', 'true');
+    bubble.addEventListener('dragstart', e => {
+      sortDragSrc = { from: 'bank', index: i };
+      e.dataTransfer.effectAllowed = 'move';
+      bubble.classList.add('dragging');
+    });
+    bubble.addEventListener('dragend', () => bubble.classList.remove('dragging'));
+
+    container.appendChild(bubble);
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    container.classList.add('drag-over-zone');
+  });
+  container.addEventListener('dragleave', () => container.classList.remove('drag-over-zone'));
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    container.classList.remove('drag-over-zone');
+    if (sortDragSrc && sortDragSrc.from === 'bin') returnBinItemToBank(sortDragSrc.catId, sortDragSrc.index);
+    sortDragSrc = null;
+  });
+}
+
+function checkSortingCorrect() {
+  if (sortBankItems.length > 0) return false;
+  return Object.keys(sortBinItems).every(catId =>
+    sortBinItems[catId].every(item => currentActivity.items[item.origIdx].categoryId === catId)
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Multiple Choice — tap to select option(s)
+// ═══════════════════════════════════════════════════════════════════════════
+function startMultipleChoice(data) {
+  currentActivity = data;
+  mcSelected       = [];
+
+  showScreen('multiple-choice');
+  document.getElementById('activityTitle').textContent       = data.title;
+  document.getElementById('activityInstruction').textContent = data.instruction;
+  document.getElementById('levelBadge').textContent = data.multiSelect ? 'Choose all that apply' : 'Choose one';
+
+  hideFeedback();
+  renderMc();
+}
+
+function resetMultipleChoice() {
+  mcSelected = [];
+  hideFeedback();
+  renderMc();
+}
+
+function renderMc() {
+  const qBox = document.getElementById('mcQuestionBox');
+  qBox.innerHTML = '';
+  const question = currentActivity.question || {};
+  if (question.text) {
+    const p = document.createElement('div');
+    p.className   = 'mc-question-text';
+    p.textContent = question.text;
+    qBox.appendChild(p);
+  }
+  if (question.image) {
+    const img = document.createElement('img');
+    img.src = question.image;
+    img.alt = question.text || '';
+    qBox.appendChild(img);
+  }
+
+  const optBox = document.getElementById('mcOptionsBox');
+  optBox.innerHTML = '';
+  (currentActivity.options || []).forEach((opt, i) => {
+    const row = document.createElement('div');
+    row.className = 'mc-option' + (mcSelected.includes(i) ? ' selected' : '');
+
+    const check = document.createElement('span');
+    check.className   = 'mc-check';
+    check.textContent = mcSelected.includes(i) ? '✓' : '';
+    row.appendChild(check);
+
+    if (opt.image) {
+      const img = document.createElement('img');
+      img.src = opt.image;
+      img.alt = opt.text || '';
+      row.appendChild(img);
+    }
+    if (opt.text) {
+      const span = document.createElement('span');
+      span.textContent = opt.text;
+      row.appendChild(span);
+    }
+
+    row.addEventListener('click', () => toggleMcOption(i));
+    optBox.appendChild(row);
+  });
+
+  updateCheckBtn();
+}
+
+function toggleMcOption(i) {
+  const isMulti = !!(currentActivity && currentActivity.multiSelect);
+  if (isMulti) {
+    const idx = mcSelected.indexOf(i);
+    if (idx === -1) mcSelected.push(i); else mcSelected.splice(idx, 1);
+  } else {
+    mcSelected = [i];
+  }
+  renderMc();
+}
+
+function checkMcCorrect() {
+  const correctIdxs = currentActivity.options
+    .map((o, i) => (o.isCorrect ? i : null))
+    .filter(i => i !== null);
+  if (correctIdxs.length !== mcSelected.length) return false;
+  const selSet = new Set(mcSelected);
+  return correctIdxs.every(i => selSet.has(i));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Shared: check button, answer checking, feedback
+// ═══════════════════════════════════════════════════════════════════════════
 function updateCheckBtn() {
   const btn = document.getElementById('checkBtn');
-  const allFilled = slots.every(s => s !== null);
-  btn.disabled = !allFilled;
+  if (!currentActivity) { btn.disabled = true; return; }
+  const type = currentActivity.activityType || 'ordering';
+  if (type === 'sorting') {
+    btn.disabled = sortBankItems.length > 0;
+  } else if (type === 'multiple-choice') {
+    btn.disabled = mcSelected.length === 0;
+  } else {
+    btn.disabled = !slots.every(s => s !== null);
+  }
 }
 
-// ── Answer Checking ────────────────────────────────────────────────────────
 function checkAnswer() {
   if (!currentActivity) return;
+  const type = currentActivity.activityType || 'ordering';
   let isCorrect;
-  if (currentActivity.languageLevel === 'word' && currentActivity.targetWord) {
-    // For word mode: compare assembled letters as a string (repeated letters are interchangeable)
+  if (type === 'sorting') {
+    isCorrect = checkSortingCorrect();
+  } else if (type === 'multiple-choice') {
+    isCorrect = checkMcCorrect();
+  } else if (currentActivity.languageLevel === 'word' && currentActivity.targetWord) {
     const assembled = slots.map(s => s ? s.text : '').join('');
     isCorrect = assembled === currentActivity.targetWord;
   } else {
@@ -378,10 +700,10 @@ function hideFeedback() {
 function onFeedbackBtn() {
   hideFeedback();
   if (!feedbackIsCorrect) {
-    const items = currentActivity.items.map((item, i) => ({ ...item, origIdx: i }));
-    slots = new Array(items.length).fill(null);
-    bank  = shuffle([...items]);
-    render();
+    const type = currentActivity.activityType || 'ordering';
+    if      (type === 'sorting')          resetSorting();
+    else if (type === 'multiple-choice')  resetMultipleChoice();
+    else                                   resetOrdering();
     try {
       firebase.database()
         .ref(`/robots/${currentRobotId}/flexi/studentStatus`)
@@ -392,7 +714,7 @@ function onFeedbackBtn() {
 
 // ── Vocabulary Audio ───────────────────────────────────────────────────────
 function speakText(text) {
-  if (!('speechSynthesis' in window)) return;
+  if (!('speechSynthesis' in window) || !text) return;
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
   utt.lang   = 'en-US';

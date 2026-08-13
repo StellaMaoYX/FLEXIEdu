@@ -1,8 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * My Materials — Google-Drive-style folder/material browser for teachers.
+ * My Materials — Google-Drive-style folder/class browser for teachers.
  * Every node lives at /users/{uid}/library/{nodeId}:
- *   { type: 'folder'|'material', name, parentId, createdAt, updatedAt,
- *     activityType?, queue?, activeIndex? }   // activityType+ only on materials
+ *   folder: { type: 'folder', name, parentId, createdAt, updatedAt }
+ *   class:  { type: 'class', name, parentId, createdAt, updatedAt,
+ *             tasks: Task[], activeIndex }
+ * A class is the content of one lesson: it holds many heterogeneous tasks
+ * (ordering / sorting / multiple-choice — see class.js), all editable and
+ * pushable to a robot from the single class.html page.
+ *
+ * Legacy nodes of { type: 'material', activityType: 'sentence-ordering',
+ * queue, activeIndex } are auto-migrated into the class shape the first
+ * time a teacher opens them — see migrateLegacyMaterialToClass() below.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 var config = new Config();
@@ -16,18 +24,6 @@ var robotNames = [];
 var nodes = {};
 var currentFolderId = null;
 var libraryLoaded = false;
-
-// Material types a teacher can create. Only one exists today; adding a new
-// activity editor later just means adding an entry here plus an openMaterial()
-// branch — the folder/rename/delete machinery doesn't change.
-var MATERIAL_TYPES = [
-  {
-    key: 'sentence-ordering',
-    label: 'Sentence Ordering Activity',
-    icon: '🧩',
-    description: 'Drag-and-drop sequencing activity with vocabulary audio and robot feedback.',
-  },
-];
 
 // Require Google login from the homepage, same as the other teacher tools.
 Database.handleAuthStateChange = function(user) {
@@ -160,73 +156,106 @@ function createFolder() {
   }).catch(function(err) { alert('Could not create folder: ' + err.message); });
 }
 
-function openMaterialTypePicker() {
+function createClass() {
   closeNewMenu();
-  renderMaterialTypeList();
-  document.getElementById('materialTypeModal').style.display = 'flex';
-}
-
-function closeMaterialTypeModal() {
-  document.getElementById('materialTypeModal').style.display = 'none';
-}
-
-function renderMaterialTypeList() {
-  var list = document.getElementById('materialTypeList');
-  list.innerHTML = MATERIAL_TYPES.map(function(t) {
-    return '' +
-      '<button class="material-type-option" onclick="createMaterial(\'' + t.key + '\')">' +
-        '<span class="material-type-icon">' + t.icon + '</span>' +
-        '<span class="material-type-text">' +
-          '<span class="material-type-label">' + escHtml(t.label) + '</span>' +
-          '<span class="material-type-desc">' + escHtml(t.description) + '</span>' +
-        '</span>' +
-      '</button>';
-  }).join('');
-}
-
-function createMaterial(typeKey) {
-  var typeDef = MATERIAL_TYPES.filter(function(t) { return t.key === typeKey; })[0];
-  if (!typeDef) return;
-  var name = prompt('Material name:', 'Untitled ' + typeDef.label);
+  var name = prompt('Class name:', 'Untitled Class');
   if (!name) return;
   name = name.trim();
   if (!name) return;
-  closeMaterialTypeModal();
 
   var id = newId();
   var now = Date.now();
   var node = {
-    type: 'material',
+    type: 'class',
     name: name,
     parentId: currentFolderId,
-    activityType: typeKey,
+    tasks: [],
+    activeIndex: 0,
     createdAt: now,
     updatedAt: now,
   };
 
-  if (typeKey === 'sentence-ordering') {
-    node.queue = [{
-      title: 'New Activity',
-      successPhrase: 'Great job!',
-      level: 'sentence',
-      instruction: 'Put these steps in the correct order!',
-      items: [],
-      targetWord: null,
-    }];
-    node.activeIndex = 0;
-  }
-
   firebase.database().ref('/users/' + currentUid + '/library/' + id).set(node)
     .then(function() { openMaterial(id); })
-    .catch(function(err) { alert('Could not create material: ' + err.message); });
+    .catch(function(err) { alert('Could not create class: ' + err.message); });
+}
+
+// ── Legacy migration ────────────────────────────────────────────────────
+// Normalizes an old sentence-ordering "activity" (any of its historical
+// shapes) into the flat { title, successPhrase, level, instruction, items,
+// targetWord } form — ported from migrateActivity() in the old
+// sentence-ordering.js so legacy Firebase data still opens correctly.
+function migrateLegacyActivity(act) {
+  var LEVELS = { word: 1, phrase: 1, sentence: 1, paragraph: 1 };
+  if (act.level && !act.levels) {
+    if (!(act.level in LEVELS)) act.level = 'sentence';
+    if (act.items === undefined) act.items = [];
+    if (act.targetWord === undefined) act.targetWord = null;
+    return act;
+  }
+  if (act.levels) {
+    var level = (act.currentLevel && act.levels[act.currentLevel]) ? act.currentLevel : 'sentence';
+    var lvl = act.levels[level] || { instruction: '', items: [] };
+    return {
+      title: act.title || 'Untitled',
+      successPhrase: act.successPhrase || '',
+      level: level,
+      instruction: lvl.instruction || '',
+      items: lvl.items || [],
+      targetWord: lvl.targetWord || null,
+    };
+  }
+  return {
+    title: act.title || 'Untitled',
+    successPhrase: act.successPhrase || '',
+    level: 'sentence',
+    instruction: act.instruction || '',
+    items: act.items || [],
+    targetWord: null,
+  };
+}
+
+function genTaskId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Converts a legacy { type:'material', activityType:'sentence-ordering',
+// queue, activeIndex } node into the new { type:'class', tasks, activeIndex }
+// shape. Each queue entry becomes one 'ordering' task.
+function migrateLegacyMaterialToClass(node) {
+  var queue = node.queue || [];
+  var tasks = queue.map(function(act) {
+    var norm = migrateLegacyActivity(act);
+    norm.id = genTaskId();
+    norm.taskType = 'ordering';
+    if (norm.instruction === undefined) norm.instruction = '';
+    if (norm.successPhrase === undefined) norm.successPhrase = '';
+    return norm;
+  });
+  return {
+    type: 'class',
+    name: node.name,
+    parentId: node.parentId,
+    createdAt: node.createdAt,
+    updatedAt: Date.now(),
+    tasks: tasks,
+    activeIndex: node.activeIndex || 0,
+  };
 }
 
 // ── Open ─────────────────────────────────────────────────────────────────
 function openMaterial(id) {
   var node = nodes[id];
   if (!node) return;
-  if (node.activityType === 'sentence-ordering') {
-    window.location.href = 'sentence-ordering.html?material=' + id + '&robot=' + currentRobot;
+  if (node.type === 'class') {
+    window.location.href = 'class.html?class=' + id + '&robot=' + currentRobot;
+    return;
+  }
+  if (node.type === 'material') {
+    var migrated = migrateLegacyMaterialToClass(node);
+    firebase.database().ref('/users/' + currentUid + '/library/' + id).set(migrated)
+      .then(function() { window.location.href = 'class.html?class=' + id + '&robot=' + currentRobot; })
+      .catch(function(err) { alert('Could not open class: ' + err.message); });
   }
 }
 
@@ -289,9 +318,10 @@ function renderBreadcrumb() {
   if (crumbs.length) crumbs[crumbs.length - 1].classList.add('current');
 }
 
-function materialIcon(activityType) {
-  var t = MATERIAL_TYPES.filter(function(t) { return t.key === activityType; })[0];
-  return t ? t.icon : '📄';
+function nodeIcon(node) {
+  if (node.type === 'class') return '🏫';
+  if (node.type === 'material') return '🧩'; // legacy, migrates on open
+  return '📄';
 }
 
 function renderGrid() {
@@ -320,7 +350,7 @@ function renderGrid() {
   empty.style.display = 'none';
 
   grid.innerHTML = items.map(function(n) {
-    var icon = n.type === 'folder' ? '📁' : materialIcon(n.activityType);
+    var icon = n.type === 'folder' ? '📁' : nodeIcon(n);
     var openAction = n.type === 'folder' ? "navigateTo('" + n.id + "')" : "openMaterial('" + n.id + "')";
     return '' +
       '<div class="lib-tile">' +
